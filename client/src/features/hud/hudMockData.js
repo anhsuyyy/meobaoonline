@@ -37,13 +37,6 @@ export const mockMapInfo = {
     isSafeZone: true
 };
 
-export const mockChatMessages = [
-    { id: 1, channel: 'system', sender: 'Hệ Thống', text: 'Chào mừng chiến binh đến với thế giới Mèo Đa Vũ Trụ Online!' },
-    { id: 2, channel: 'world', sender: 'MèoHiệpSĩ', text: 'Ai party săn Boss Nhện Chúa Chương 0 không?' },
-    { id: 3, channel: 'system', sender: 'Hệ Thống', text: 'Bảo trì máy chủ định kỳ vào 05:00 sáng mai.' },
-    { id: 4, channel: 'party', sender: 'MèoCửTạ', text: 'Sẵn sàng farm điểm tiềm năng rồi nha anh em!' }
-];
-
 export const skillBarConfig = [
     {
         id: 's1',

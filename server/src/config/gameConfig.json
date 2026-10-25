@@ -29,6 +29,16 @@
     "autoFarmRadius": 300,
     "autoFarmLeashRadius": 320
   },
+  "basicAttack": {
+    "id": "basic",
+    "name": "Đánh thường",
+    "mpCost": 0,
+    "cooldownMs": 500,
+    "range": 75,
+    "damageMultiplierMin": 1.0,
+    "damageMultiplierMax": 1.2,
+    "type": "single"
+  },
   "classes": {
     "meo_bao": {
       "name": "Mèo Báo",
@@ -52,7 +62,7 @@
           "id": "s3",
           "name": "Bão Móng Vuốt",
           "key": "Q",
-          "mpCost": 30,
+          "mpCost": 35,
           "cooldownMs": 8000,
           "range": 120,
           "damageMultiplierMin": 2.0,
@@ -60,6 +70,38 @@
           "hits": 2,
           "maxTargets": 4,
           "type": "aoe"
+        },
+        "s2": {
+          "id": "s2",
+          "name": "Cào Lửa Nguyên Tố",
+          "key": "2",
+          "mpCost": 15,
+          "cooldownMs": 2000,
+          "range": 150,
+          "damageMultiplierMin": 1.2,
+          "damageMultiplierMax": 1.5,
+          "type": "single"
+        },
+        "s4": {
+          "id": "s4",
+          "name": "Tiếng Gầm Sư Tử Mèo",
+          "key": "4",
+          "mpCost": 50,
+          "cooldownMs": 8000,
+          "range": 120,
+          "damageMultiplierMin": 0.8,
+          "damageMultiplierMax": 1.1,
+          "maxTargets": 4,
+          "type": "aoe"
+        },
+        "s5": {
+          "id": "s5",
+          "name": "Cỏ Mèo Hồi Máu",
+          "key": "5",
+          "mpCost": 100,
+          "cooldownMs": 12000,
+          "healAmount": 120,
+          "type": "heal"
         }
       }
     },

@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "assets:map": "node scripts/generateMapAtlas.js",
+    "assets:entities": "node scripts/generateEntityAtlas.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

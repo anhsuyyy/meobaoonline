@@ -3,11 +3,11 @@ const cors = require('cors');
 const authRouter = require('./modules/auth/authController');
 const characterRouter = require('./modules/characters/characterController');
 const gameConfig = require('./config/gameConfig.json');
+const { corsOrigin } = require('./config/clientOrigin');
 
 const app = express();
 
-const clientOrigin = process.env.CLIENT_ORIGIN || '*';
-app.use(cors({ origin: clientOrigin }));
+app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 
 // Auth routes

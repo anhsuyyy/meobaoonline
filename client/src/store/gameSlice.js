@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { mockMapInfo, mockChatMessages, mockTargetStatus } from '../features/hud/hudMockData';
+import { mockMapInfo, mockTargetStatus } from '../features/hud/hudMockData';
 
 const initialState = {
     playerId: null,
@@ -41,7 +41,7 @@ const initialState = {
         target: 3,
         status: 'accepted'
     },
-    chatMessages: mockChatMessages,
+    chatMessages: [],
     isChatOpen: true,
     systemMessage: 'Đăng nhập để bắt đầu hành trình.'
 };
@@ -77,6 +77,7 @@ export const gameSlice = createSlice({
             state.characterLoading = false;
             state.characterError = null;
             applyCharacter(state, character);
+            state.chatMessages = [];
             state.playerId = null;
             state.isAuto = false;
             state.autoAnchor = null;
@@ -96,6 +97,7 @@ export const gameSlice = createSlice({
             state.user = { username: '', token: null, isAuthenticated: false };
             state.isAuthModalOpen = true;
             state.character = null;
+            state.chatMessages = [];
             state.characterLoading = false;
             state.characterError = null;
             state.classSelection = initialState.classSelection;
@@ -205,12 +207,27 @@ export const gameSlice = createSlice({
         toggleChat: (state) => {
             state.isChatOpen = !state.isChatOpen;
         },
-        addChatMessage: (state, action) => {
-            state.chatMessages.push({ id: Date.now(), ...action.payload });
-            if (state.chatMessages.length > 50) state.chatMessages.shift();
+        receiveChatHistory: (state, action) => {
+            state.chatMessages = [];
+            mergeChatMessages(state, action.payload);
+        },
+        receiveChatMessage: (state, action) => {
+            mergeChatMessages(state, [action.payload]);
         }
     }
 });
+
+function mergeChatMessages(state, messages) {
+    const knownIds = new Set(state.chatMessages.map((message) => message.messageId));
+    for (const message of messages || []) {
+        if (message?.messageId && !knownIds.has(message.messageId)) {
+            knownIds.add(message.messageId);
+            state.chatMessages.push(message);
+        }
+    }
+    state.chatMessages.sort((a, b) => a.sequence - b.sequence);
+    if (state.chatMessages.length > 200) state.chatMessages.splice(0, state.chatMessages.length - 200);
+}
 
 export const {
     setPlayerId,
@@ -234,7 +251,8 @@ export const {
     closeClassSelection,
     setSystemMessage,
     toggleChat,
-    addChatMessage
+    receiveChatHistory,
+    receiveChatMessage
 } = gameSlice.actions;
 
 export default gameSlice.reducer;

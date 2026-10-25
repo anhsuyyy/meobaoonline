@@ -15,7 +15,9 @@ import {
     updateTargetHp,
     openClassSelection,
     setClassSelectionError,
-    classSelectionSucceeded
+    classSelectionSucceeded,
+    receiveChatHistory,
+    receiveChatMessage
 } from '../store/gameSlice';
 import networkInstance from './network';
 
@@ -72,6 +74,8 @@ const GameCanvas = () => {
         // ── Cầu nối sự kiện Phaser → Redux ──
         const ev = phaserGame.events;
         ev.on('setPlayerId',        (id)      => dispatch(setPlayerId(id)));
+        ev.on('chatHistory',        (history) => dispatch(receiveChatHistory(Object.values(history).flat())));
+        ev.on('chatMessage',        (message) => dispatch(receiveChatMessage(message)));
         ev.on('updateStats',        (stats)   => dispatch(updateStats(stats)));
         ev.on('setPlayerPos',       (pos)     => dispatch(setPlayerPos(pos)));
         ev.on('setSelectedTarget',  (target)  => dispatch(setSelectedTarget(target)));

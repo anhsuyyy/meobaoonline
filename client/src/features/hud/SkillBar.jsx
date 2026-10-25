@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { ASSET_MANIFEST } from '../../game/config/assetManifest';
 import networkInstance from '../../game/network';
@@ -9,8 +9,7 @@ import networkInstance from '../../game/network';
  */
 const SKILLS = ASSET_MANIFEST.skills;
 
-// Đồng hồ cooldown đơn giản bằng CSS animation
-const CooldownOverlay = ({ pct }) => {
+const CooldownOverlay = ({ pct, remainingMs }) => {
     if (pct <= 0) return null;
     return (
         <div style={{
@@ -21,12 +20,12 @@ const CooldownOverlay = ({ pct }) => {
             textShadow: '0 1px 3px #000',
             zIndex: 2, pointerEvents: 'none'
         }}>
-            {Math.ceil(pct * 10).toFixed(0)}s
+            {remainingMs >= 1000 ? `${(remainingMs / 1000).toFixed(1)}s` : `${(remainingMs / 1000).toFixed(2)}s`}
         </div>
     );
 };
 
-const SkillSlot = ({ skill, isActive, onPress, cooldownPct = 0, mpInsufficient = false }) => (
+const SkillSlot = ({ skill, isActive, onPress, cooldownPct = 0, remainingMs = 0, mpInsufficient = false }) => (
     <button
         onClick={onPress}
         title={`${skill.name} (${skill.hotkey}) – ${skill.mpCost} MP`}
@@ -56,7 +55,7 @@ const SkillSlot = ({ skill, isActive, onPress, cooldownPct = 0, mpInsufficient =
         </span>
 
         {/* Cooldown overlay */}
-        <CooldownOverlay pct={cooldownPct} />
+        <CooldownOverlay pct={cooldownPct} remainingMs={remainingMs} />
 
         {/* Phím tắt badge góc trên phải */}
         <span style={{
@@ -92,38 +91,70 @@ const SkillSlot = ({ skill, isActive, onPress, cooldownPct = 0, mpInsufficient =
 
 const SkillBar = () => {
     const { mp, isAuto } = useSelector((state) => state.game);
-    const [cooldowns, setCooldowns] = useState({}); // skillId → remaining seconds
+    const [cooldowns, setCooldowns] = useState({}); // skillId → { endsAt, durationMs }
+    const [clock, setClock] = useState(Date.now());
     const [hoveredSkill, setHoveredSkill] = useState(null);
 
-    // Đếm ngược cooldown mỗi 100ms
+    // Đọc thời điểm kết thúc từ server event; cập nhật HUD độc lập với 20Hz game tick.
     useEffect(() => {
         const id = setInterval(() => {
-            setCooldowns(prev => {
-                const next = {};
-                let changed = false;
-                for (const k in prev) {
-                    const v = Math.max(0, prev[k] - 0.1);
-                    next[k] = v;
-                    if (v !== prev[k]) changed = true;
-                }
-                return changed ? next : prev;
-            });
-        }, 100);
+            setClock(Date.now());
+            setCooldowns((prev) => Object.fromEntries(
+                Object.entries(prev).filter(([, value]) => value.endsAt > Date.now())
+            ));
+        }, 50);
         return () => clearInterval(id);
+    }, []);
+
+    useEffect(() => {
+        const onAuthoritativeCast = (event) => {
+            const { skillId, cooldownMs } = event.detail || {};
+            if (!SKILLS[skillId] || !Number.isFinite(cooldownMs)) return;
+            const durationMs = Math.max(0, cooldownMs);
+            setCooldowns((previous) => ({
+                ...previous,
+                [skillId]: { endsAt: Date.now() + durationMs, durationMs }
+            }));
+        };
+        window.addEventListener('game:skill-cooldown', onAuthoritativeCast);
+        return () => window.removeEventListener('game:skill-cooldown', onAuthoritativeCast);
     }, []);
 
     const castSkill = useCallback((skillId) => {
         const skill = SKILLS[skillId];
         if (!skill) return;
-        if (cooldowns[skillId] > 0) return;
+        if ((cooldowns[skillId]?.endsAt || 0) > Date.now()) return;
         if (mp < skill.mpCost) return;
 
         const socket = networkInstance.getSocket();
         if (socket) socket.emit('playerAttack', { skillId });
 
-        // Set cooldown
-        setCooldowns(prev => ({ ...prev, [skillId]: skill.cooldown / 1000 }));
     }, [cooldowns, mp]);
+
+    useEffect(() => {
+        const onKeyDown = (event) => {
+            if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
+            const target = event.target;
+            if (target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
+
+            const skillId = ({
+                Digit1: 's1', Digit2: 's2', Digit3: 's3', Digit4: 's4', Digit5: 's5',
+                Numpad1: 's1', Numpad2: 's2', Numpad3: 's3', Numpad4: 's4', Numpad5: 's5',
+                Space: 's1', KeyQ: 's3'
+            })[event.code];
+            if (!skillId) return;
+            event.preventDefault();
+            castSkill(skillId);
+        };
+        const onVirtualSkill = (event) => castSkill(event.detail);
+
+        window.addEventListener('keydown', onKeyDown);
+        window.addEventListener('game:cast-skill', onVirtualSkill);
+        return () => {
+            window.removeEventListener('keydown', onKeyDown);
+            window.removeEventListener('game:cast-skill', onVirtualSkill);
+        };
+    }, [castSkill]);
 
     const toggleAuto = useCallback(() => {
         const socket = networkInstance.getSocket();
@@ -131,8 +162,7 @@ const SkillBar = () => {
     }, [isAuto]);
 
     const handlePickup = useCallback(() => {
-        const socket = networkInstance.getSocket();
-        if (socket) socket.emit('playerInput', {});
+        window.dispatchEvent(new Event('game:pickup'));
     }, []);
 
     const skillList = ['s1', 's2', 's3', 's4', 's5'];
@@ -178,7 +208,9 @@ const SkillBar = () => {
                 <div style={{ display: 'flex', gap: 5 }}>
                     {skillList.map((id) => {
                         const skill = SKILLS[id];
-                        const cdPct = cooldowns[id] > 0 ? (cooldowns[id] / (skill.cooldown / 1000)) : 0;
+                        const cooldown = cooldowns[id];
+                        const remainingMs = Math.max(0, (cooldown?.endsAt || 0) - clock);
+                        const cdPct = cooldown && cooldown.durationMs > 0 ? remainingMs / cooldown.durationMs : 0;
                         return (
                             <div
                                 key={id}
@@ -190,6 +222,7 @@ const SkillBar = () => {
                                     isActive={false}
                                     onPress={() => castSkill(id)}
                                     cooldownPct={cdPct}
+                                    remainingMs={remainingMs}
                                     mpInsufficient={mp < skill.mpCost}
                                 />
                             </div>

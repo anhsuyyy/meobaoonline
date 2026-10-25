@@ -1,12 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { toggleChat, addChatMessage } from '../../store/gameSlice';
+import { toggleChat } from '../../store/gameSlice';
+import networkInstance from '../../game/network';
 
 const CHANNEL_COLORS = {
     system:  { label: '[HT]',    sender: '#fbbf24', text: '#fde68a' },
     world:   { label: '[TG]',    sender: '#4ade80', text: '#d1fae5' },
     party:   { label: '[ĐỘI]',   sender: '#60a5fa', text: '#dbeafe' },
-    guild:   { label: '[MH]',    sender: '#c084fc', text: '#ede9fe' },
+    area:    { label: '[KV]',    sender: '#c084fc', text: '#ede9fe' },
 };
 
 /**
@@ -14,9 +15,10 @@ const CHANNEL_COLORS = {
  */
 const ChatPanel = () => {
     const dispatch = useDispatch();
-    const { chatMessages, isChatOpen, user } = useSelector((state) => state.game);
+    const { chatMessages, isChatOpen } = useSelector((state) => state.game);
     const [activeTab, setActiveTab] = useState('all');
     const [inputText, setInputText] = useState('');
+    const [sendError, setSendError] = useState('');
     const msgListRef = useRef(null);
 
     // Auto-scroll xuống dưới khi có tin nhắn mới
@@ -34,12 +36,24 @@ const ChatPanel = () => {
     const handleSendMessage = (e) => {
         e.preventDefault();
         if (!inputText.trim()) return;
-        dispatch(addChatMessage({
-            channel: 'world',
-            sender: user.username || 'Bạn',
-            text: inputText.trim()
-        }));
-        setInputText('');
+        if (activeTab === 'system') {
+            setSendError('Kênh hệ thống chỉ nhận thông báo từ máy chủ.');
+            return;
+        }
+        const channel = ['world', 'party', 'area'].includes(activeTab) ? activeTab : 'world';
+        const socket = networkInstance.getSocket();
+        if (!socket?.connected) {
+            setSendError('Đang kết nối máy chủ…');
+            return;
+        }
+        socket.emit('chatSend', { channel, text: inputText }, (result) => {
+            if (!result?.ok) {
+                setSendError(result?.error || 'Không gửi được tin nhắn.');
+                return;
+            }
+            setSendError('');
+            setInputText('');
+        });
     };
 
     const tabs = [
@@ -47,6 +61,7 @@ const ChatPanel = () => {
         { key: 'system', label: 'Hệ thống' },
         { key: 'world', label: 'Thế giới' },
         { key: 'party', label: 'Đội' },
+        { key: 'area', label: 'Khu vực' },
     ];
 
     const panelStyle = {
@@ -119,9 +134,9 @@ const ChatPanel = () => {
                         {filteredMessages.map((msg) => {
                             const cfg = CHANNEL_COLORS[msg.channel] || CHANNEL_COLORS.world;
                             return (
-                                <div key={msg.id} style={{ lineHeight: 1.4, fontSize: 10 }}>
+                                <div key={msg.messageId} style={{ lineHeight: 1.4, fontSize: 10 }}>
                                     <span style={{ color: cfg.sender, fontWeight: 700 }}>
-                                        {cfg.label} {msg.sender}:{' '}
+                                        {cfg.label} {msg.senderName}:{' '}
                                     </span>
                                     <span style={{ color: cfg.text }}>{msg.text}</span>
                                 </div>
@@ -164,6 +179,7 @@ const ChatPanel = () => {
                             Gửi
                         </button>
                     </form>
+                    {sendError && <span role="status" style={{ color: '#fca5a5', fontSize: 9 }}>{sendError}</span>}
                 </div>
             ) : (
                 <div

@@ -4,11 +4,30 @@ import { setAuthSession } from '../../store/gameSlice';
 import { apiRequest } from '../../game/api';
 import networkInstance from '../../game/network';
 
+const REMEMBERED_CREDENTIALS_KEY = 'meo-online.remembered-credentials';
+
+function readRememberedCredentials() {
+    try {
+        const saved = window.localStorage.getItem(REMEMBERED_CREDENTIALS_KEY);
+        if (saved) {
+            const credentials = JSON.parse(saved);
+            if (typeof credentials.username === 'string' && typeof credentials.password === 'string') return credentials;
+        }
+
+        // Migrate the previously remembered username without assuming a saved password.
+        return { username: window.localStorage.getItem('meo-online.remembered-username') || '', password: '' };
+    } catch {
+        return { username: '', password: '' };
+    }
+}
+
 const AuthModal = () => {
     const dispatch = useDispatch();
+    const [savedCredentials] = useState(readRememberedCredentials);
     const [isRegister, setIsRegister] = useState(false);
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+    const [username, setUsername] = useState(savedCredentials.username);
+    const [rememberAccount, setRememberAccount] = useState(Boolean(savedCredentials.username));
+    const [password, setPassword] = useState(savedCredentials.password);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -25,6 +44,22 @@ const AuthModal = () => {
             const { character } = await apiRequest('/api/characters/me', {
                 token: result.token
             });
+
+            if (!isRegister) {
+                try {
+                    if (rememberAccount) {
+                        window.localStorage.setItem(REMEMBERED_CREDENTIALS_KEY, JSON.stringify({
+                            username: username.trim(),
+                            password
+                        }));
+                    } else {
+                        window.localStorage.removeItem(REMEMBERED_CREDENTIALS_KEY);
+                        window.localStorage.removeItem('meo-online.remembered-username');
+                    }
+                } catch {
+                    // Private browsing/storage restrictions do not block sign-in.
+                }
+            }
 
             networkInstance.setToken(result.token);
             dispatch(setAuthSession({
@@ -43,6 +78,18 @@ const AuthModal = () => {
         setIsRegister(register);
         setError('');
         setPassword('');
+    };
+
+    const handleRememberChange = (checked) => {
+        setRememberAccount(checked);
+        if (!checked) {
+            try {
+                window.localStorage.removeItem(REMEMBERED_CREDENTIALS_KEY);
+                window.localStorage.removeItem('meo-online.remembered-username');
+            } catch {
+                // Storage restrictions do not block sign-in.
+            }
+        }
     };
 
     return (
@@ -94,6 +141,8 @@ const AuthModal = () => {
                     <label className="flex flex-col gap-1.5 text-sm font-semibold text-amber-100">
                         Tên đăng nhập
                         <input
+                            name="username"
+                            id="auth-username"
                             autoComplete="username"
                             autoFocus
                             required
@@ -110,6 +159,8 @@ const AuthModal = () => {
                     <label className="flex flex-col gap-1.5 text-sm font-semibold text-amber-100">
                         Mật khẩu
                         <input
+                            name="password"
+                            id="auth-password"
                             autoComplete={isRegister ? 'new-password' : 'current-password'}
                             required
                             minLength={8}
@@ -121,6 +172,24 @@ const AuthModal = () => {
                             className="w-full rounded-lg border border-amber-900 bg-slate-950/80 px-3 py-3 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-amber-400"
                         />
                     </label>
+
+                    {!isRegister && (
+                        <div className="flex flex-col gap-1">
+                            <label htmlFor="remember-account" className="flex cursor-pointer items-center gap-2 text-sm text-slate-200">
+                                <input
+                                    id="remember-account"
+                                    type="checkbox"
+                                    checked={rememberAccount}
+                                onChange={(event) => handleRememberChange(event.target.checked)}
+                                    className="size-4 accent-amber-500"
+                                />
+                                Ghi nhớ tài khoản và mật khẩu trên thiết bị này
+                            </label>
+                            <p className="pl-6 text-xs text-slate-400">
+                                Mật khẩu được lưu trên trình duyệt này. Chỉ bật trên thiết bị cá nhân.
+                            </p>
+                        </div>
+                    )}
 
                     <button
                         type="submit"

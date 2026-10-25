@@ -14,11 +14,13 @@ const authService = require('./modules/auth/authService');
 const setupGameSocket = require('./socket/gameSocket');
 const { connectDatabase } = require('./infrastructure/database/connection');
 const gameConfig = require('./config/gameConfig.json');
+const { assertValidGameConfig } = require('./config/validateGameConfig');
+const { corsOrigin } = require('./config/clientOrigin');
 
-const clientOrigin = process.env.CLIENT_ORIGIN || '*';
 const PORT = process.env.PORT || gameConfig.server.port || 3000;
 
 async function bootstrap() {
+    assertValidGameConfig(gameConfig);
     authService.assertConfigured();
     // 1. Connect to the configured database before accepting requests.
     await connectDatabase();
@@ -27,7 +29,7 @@ async function bootstrap() {
     const server = http.createServer(app);
     const io = new Server(server, {
         cors: {
-            origin: clientOrigin,
+            origin: corsOrigin,
             methods: ['GET', 'POST']
         }
     });
@@ -37,7 +39,7 @@ async function bootstrap() {
     server.listen(PORT, () => {
         console.log(`===============================================`);
         console.log(`🐾 MÈO ĐA VŨ TRỤ ONLINE - SERVER V${gameConfig.version}`);
-        console.log(`🚀 API & Realtime đang chạy tại: http://localhost:${PORT}`);
+        console.log(`🚀 API & Realtime đang chạy tại cổng ${PORT} (LAN enabled)`);
         console.log(`🔐 Auth API: http://localhost:${PORT}/api/auth/register`);
         console.log(`🎮 Tick Rate: ${gameConfig.server.tickRateHz}Hz (${gameConfig.server.tickIntervalMs}ms)`);
         console.log(`===============================================`);

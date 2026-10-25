@@ -53,7 +53,7 @@ const GameHUD = () => {
             <GameNotifications />
 
             {/* ── BOTTOM ROW ── */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 8 }}>
+            <div className="hidden md:flex" style={{ justifyContent: 'space-between', alignItems: 'flex-end', gap: 8 }}>
                 {/* Góc dưới trái: Chat */}
                 <ChatPanel />
 

@@ -10,6 +10,11 @@
  */
 
 export const ASSET_MANIFEST = {
+    entities: {
+        atlasPng: '/assets/entities/atlas.png',
+        atlasJson: '/assets/entities/atlas.json',
+        textureKey: 'entities.procedural.v1'
+    },
     // 1. Nhân vật & Các Lớp Nhân Vật (Classes / Skins)
     characters: {
         'meo-bao': {
@@ -117,8 +122,13 @@ export const ASSET_MANIFEST = {
     maps: {
         'chuong-0-tram-cao': {
             id: 'chuong-0-tram-cao',
+            gameMapId: 'chuong0_tram_cao',
             name: 'Trạm Cào - Bờ Suối Bạc Hà (Khu 1)',
             background: '/assets/maps/chuong-0-tram-cao/background.png',
+            atlasPng: '/assets/maps/chuong-0-tram-cao/atlas.png',
+            atlasJson: '/assets/maps/chuong-0-tram-cao/atlas.json',
+            textureKey: 'map.chuong_0_tram_cao',
+            tileSize: 32,
             tileset: '/assets/maps/chuong-0-tram-cao/tileset.png',
             river: '/assets/maps/chuong-0-tram-cao/river.png',
             minimap: '/assets/ui/minimap/chuong-0.png',
@@ -131,11 +141,11 @@ export const ASSET_MANIFEST = {
     skills: {
         's1': {
             id: 's1',
-            name: 'Cào Cơ Bản',
+            name: 'Vuốt Chớp Nhoáng',
             icon: '/assets/skills/icons/s1-cao-co-ban.png',
-            hotkey: 'Space / 1',
-            cooldown: 500,
-            mpCost: 0,
+            hotkey: '1 / Space',
+            cooldown: 650,
+            mpCost: 2,
             color: '#38bdf8',
             emoji: '🐾'
         },
@@ -153,8 +163,8 @@ export const ASSET_MANIFEST = {
             id: 's3',
             name: 'Bão Móng Vuốt',
             icon: '/assets/skills/icons/s3-bao-mong-vuot.png',
-            hotkey: 'Q / 3',
-            cooldown: 4000,
+            hotkey: '3 / Q',
+            cooldown: 8000,
             mpCost: 35,
             color: '#a855f7',
             emoji: '🌪️'
@@ -175,7 +185,7 @@ export const ASSET_MANIFEST = {
             icon: '/assets/skills/icons/s5-hoi-phuc.png',
             hotkey: '5',
             cooldown: 12000,
-            mpCost: 40,
+            mpCost: 100,
             color: '#22c55e',
             emoji: '🌿'
         }

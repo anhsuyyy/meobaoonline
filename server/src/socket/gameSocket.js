@@ -1,9 +1,12 @@
 const gameConfig = require('../config/gameConfig.json');
+const { performance } = require('node:perf_hooks');
 const MonsterAI = require('../game/MonsterAI');
 const { calculateSkillDamage } = require('../game/combat');
 const { clampToLeashCircle, findNearestValidTarget } = require('../game/autoFarm');
+const { parseMovementInput, createTokenBucket, getMovementDelta, clampPlayerPosition } = require('../game/movement');
 const authService = require('../modules/auth/authService');
 const userRepository = require('../modules/auth/userRepository');
+const { createChatService } = require('./chatService');
 
 // Quản lý trạng thái thế giới authoritative phía server
 const players = {};
@@ -16,7 +19,9 @@ for (const mid in gameConfig.monsters) {
     monsters[mid] = new MonsterAI(gameConfig.monsters[mid]);
 }
 
-function setupGameSocket(io) {
+function setupGameSocket(io, { onTick } = {}) {
+    const chatService = createChatService(io);
+    io.publishSystemChat = chatService.publishSystem;
     io.use(async (socket, next) => {
         const token = socket.handshake.auth?.token;
         const decoded = token && authService.verifyToken(token);
@@ -66,9 +71,10 @@ function setupGameSocket(io) {
             classId: character.classId || null,
             className: character.classId ? startingClass.name : null,
             input: { left: false, right: false, up: false, down: false },
+            takeInputToken: createTokenBucket({ capacity: 30, refillPerSecond: 120 }),
             isAuto: false,
             autoAnchor: { x: character.position?.x ?? 200, y: character.position?.y ?? 300 },
-            cooldowns: { s1: 0, s3: 0 },
+            cooldowns: { basic: 0, s1: 0, s2: 0, s3: 0, s4: 0, s5: 0 },
             inventory: {
                 gold: character.gold || 0,
                 dtn: character.dtn || 0,
@@ -90,7 +96,11 @@ function setupGameSocket(io) {
             lastPersistAt: Date.now()
         };
 
+        socket.mapId = gameConfig.map.id;
         socket.join('room_chuong0');
+        socket.join(`map_${socket.mapId}`);
+        const partyId = socket.partyId || character.partyId || null;
+        if (partyId) socket.join(`party_${partyId}`);
 
         // Gửi toàn bộ trạng thái ban đầu cho người chơi
         socket.emit('initialState', {
@@ -114,6 +124,16 @@ function setupGameSocket(io) {
             },
             character: publicCharacter(players[socket.id])
         });
+        socket.emit('chatHistory', chatService.getHistory({
+            mapId: socket.mapId,
+            partyId
+        }));
+
+        socket.on('chatSend', (payload, acknowledge) => {
+            const result = chatService.handleSend(socket, payload);
+            if (typeof acknowledge === 'function') acknowledge(result);
+            else if (!result.ok) socket.emit('chatError', { message: result.error });
+        });
 
         // Báo cho những người chơi khác trong phòng
         socket.to('room_chuong0').emit('newPlayer', serializePlayer(players[socket.id]));
@@ -121,14 +141,9 @@ function setupGameSocket(io) {
         // 1. Nhận input điều khiển di chuyển
         socket.on('playerInput', (inputData) => {
             const p = players[socket.id];
-            if (p && !p.isAuto) {
-                p.input = {
-                    left: !!inputData.left,
-                    right: !!inputData.right,
-                    up: !!inputData.up,
-                    down: !!inputData.down
-                };
-            }
+            if (!p || p.isAuto || !p.takeInputToken()) return;
+            const validatedInput = parseMovementInput(inputData);
+            if (validatedInput) p.input = validatedInput;
         });
 
         socket.on('interactNpc', (npcId) => {
@@ -240,14 +255,22 @@ function setupGameSocket(io) {
             }
         });
 
-        // 3. Xử lý xuất chiêu (S1 Vuốt Chớp Nhoáng hoặc S3 Bão Móng Vuốt)
+        // 3. Combat và kỹ năng: server xác thực skillId, MP, cooldown, tầm và mục tiêu.
         socket.on('playerAttack', async (payload = {}) => {
             const p = players[socket.id];
             if (!p || p.hp <= 0) return;
 
-            const skillId = payload.skillId === 's3' ? 's3' : 's1';
+            const allowedSkills = ['basic', 's1', 's2', 's3', 's4', 's5'];
+            if (!payload || typeof payload !== 'object' || !allowedSkills.includes(payload.skillId)) {
+                socket.emit('combatError', { message: 'Kỹ năng không hợp lệ.' });
+                return;
+            }
+
+            const skillId = payload.skillId;
             const activeClass = gameConfig.classes[p.classId] || gameConfig.classes.meo_bao;
-            const skillConfig = activeClass.skills?.[skillId] || gameConfig.classes.meo_bao.skills[skillId];
+            const skillConfig = skillId === 'basic'
+                ? gameConfig.basicAttack
+                : activeClass.skills?.[skillId] || gameConfig.classes.meo_bao.skills[skillId];
             if (!skillConfig) return;
 
             const now = Date.now();
@@ -261,56 +284,42 @@ function setupGameSocket(io) {
                 return;
             }
 
+            if (skillConfig.type === 'heal' && p.hp >= p.maxHp) {
+                socket.emit('combatError', { message: 'HP đang đầy.' });
+                return;
+            }
+
             // Trừ MP & cập nhật cooldown authoritative
             p.mp -= skillConfig.mpCost;
             p.cooldowns[skillId] = now;
 
             const hits = [];
 
-            if (skillId === 's1') {
-                // S1: Vuốt Chớp Nhoáng (Đơn mục tiêu, cự ly gần)
+            let healed = 0;
+            if (skillConfig.type === 'heal') {
+                healed = Math.min(skillConfig.healAmount, p.maxHp - p.hp);
+                p.hp += healed;
+            } else {
+                let targetCount = 0;
                 for (const mid in monsters) {
-                    const m = monsters[mid];
-                    if (m.isDead || m.hp <= 0) continue;
+                    const monster = monsters[mid];
+                    if (monster.isDead || monster.hp <= 0) continue;
 
-                    const dist = Math.hypot(p.x - m.x, p.y - m.y);
-                    if (dist <= skillConfig.range) {
-                        const { damage, isCrit } = calculateSkillDamage(p, m, skillConfig);
-                        const { damageDealt, isDead } = m.takeDamage(damage);
+                    const distance = Math.hypot(p.x - monster.x, p.y - monster.y);
+                    if (distance > skillConfig.range) continue;
+                    if (skillConfig.type !== 'aoe' && targetCount > 0) break;
+                    if (skillConfig.type === 'aoe' && targetCount >= skillConfig.maxTargets) break;
+                    targetCount++;
 
-                        const earnedDtn = Math.floor(damageDealt * m.dtnFactor);
-                        p.inventory.dtn += earnedDtn;
-
+                    for (let hit = 0; hit < (skillConfig.hits || 1); hit++) {
+                        if (monster.isDead) break;
+                        const { damage, isCrit } = calculateSkillDamage(p, monster, skillConfig);
+                        const { damageDealt, isDead } = monster.takeDamage(damage);
+                        p.inventory.dtn += Math.floor(damageDealt * monster.dtnFactor);
                         hits.push({ monsterId: mid, damage: damageDealt, isCrit, isDead });
-
                         if (isDead) {
-                            handleMonsterDeath(m, p, io);
-                        }
-                        break;
-                    }
-                }
-            } else if (skillId === 's3') {
-                // S3: Bão Móng Vuốt (AoE tối đa 4 mục tiêu, 2 hit)
-                let hitCount = 0;
-                for (const mid in monsters) {
-                    if (hitCount >= skillConfig.maxTargets) break;
-                    const m = monsters[mid];
-                    if (m.isDead || m.hp <= 0) continue;
-
-                    const dist = Math.hypot(p.x - m.x, p.y - m.y);
-                    if (dist <= skillConfig.range) {
-                        hitCount++;
-                        for (let h = 0; h < (skillConfig.hits || 2); h++) {
-                            const { damage, isCrit } = calculateSkillDamage(p, m, skillConfig);
-                            const { damageDealt, isDead } = m.takeDamage(damage);
-                            const earnedDtn = Math.floor(damageDealt * m.dtnFactor);
-                            p.inventory.dtn += earnedDtn;
-
-                            hits.push({ monsterId: mid, damage: damageDealt, isCrit, isDead });
-                            if (isDead) {
-                                handleMonsterDeath(m, p, io);
-                                break;
-                            }
+                            handleMonsterDeath(monster, p, io);
+                            break;
                         }
                     }
                 }
@@ -320,7 +329,9 @@ function setupGameSocket(io) {
             io.to('room_chuong0').emit('playerAttacked', {
                 playerId: socket.id,
                 skillId,
-                hits
+                cooldownMs: skillConfig.cooldownMs,
+                hits,
+                healed
             });
 
             // Gửi chỉ số mới cho người chơi
@@ -373,7 +384,11 @@ function setupGameSocket(io) {
 
     // VÒNG LẶP SERVER 20Hz (mỗi 50ms)
     let tickCounter = 0;
-    setInterval(() => {
+    const tickIntervalMs = gameConfig.server.tickIntervalMs || 50;
+    let nextTickAt = performance.now() + tickIntervalMs;
+    let tickTimer;
+    const runTick = () => {
+        if (onTick) onTick(performance.now());
         tickCounter++;
         let stateChanged = false;
 
@@ -397,7 +412,8 @@ function setupGameSocket(io) {
                         moved = true;
                     } else {
                         const now = Date.now();
-                        const s3Ready = (now - (p.cooldowns.s3 || 0)) >= gameConfig.classes.meo_bao.skills.s3.cooldownMs && p.mp >= 30;
+                        const autoSkill = gameConfig.classes.meo_bao.skills.s3;
+                        const s3Ready = (now - (p.cooldowns.s3 || 0)) >= autoSkill.cooldownMs && p.mp >= autoSkill.mpCost;
                         const s1Ready = (now - (p.cooldowns.s1 || 0)) >= gameConfig.classes.meo_bao.skills.s1.cooldownMs && p.mp >= 2;
 
                         if (s3Ready) {
@@ -408,16 +424,18 @@ function setupGameSocket(io) {
                     }
                 }
             } else {
-                if (p.input.left) { p.x -= p.speed; moved = true; }
-                if (p.input.right) { p.x += p.speed; moved = true; }
-                if (p.input.up) { p.y -= p.speed; moved = true; }
-                if (p.input.down) { p.y += p.speed; moved = true; }
+                const delta = getMovementDelta(p.input, p.speed);
+                const nextPosition = clampPlayerPosition(p, { x: p.x + delta.x, y: p.y + delta.y }, gameConfig.map);
+                moved = nextPosition.x !== p.x || nextPosition.y !== p.y;
+                p.x = nextPosition.x;
+                p.y = nextPosition.y;
             }
 
-            if (p.x < 25) p.x = 25;
-            if (p.x > 775) p.x = 775;
-            if (p.y < 25) p.y = 25;
-            if (p.y > 575) p.y = 575;
+            if (p.isAuto) {
+                const bounded = clampPlayerPosition(p, p, gameConfig.map);
+                p.x = bounded.x;
+                p.y = bounded.y;
+            }
 
             if (moved) stateChanged = true;
 
@@ -480,7 +498,12 @@ function setupGameSocket(io) {
 
             io.to('room_chuong0').emit('stateUpdate', payload);
         }
-    }, gameConfig.server.tickIntervalMs || 50);
+        nextTickAt += tickIntervalMs;
+        tickTimer = setTimeout(runTick, Math.max(0, nextTickAt - performance.now()));
+    };
+    tickTimer = setTimeout(runTick, tickIntervalMs);
+
+    return () => clearTimeout(tickTimer);
 }
 
 function handleMonsterDeath(monster, killerPlayer, io) {

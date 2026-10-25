@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { Buffer } from 'node:buffer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 

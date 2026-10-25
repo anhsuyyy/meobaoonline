@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setSystemMessage } from '../../store/gameSlice';
 
@@ -9,30 +9,15 @@ import { setSystemMessage } from '../../store/gameSlice';
 const GameNotifications = () => {
     const dispatch = useDispatch();
     const systemMessage = useSelector((state) => state.game.systemMessage);
-    const [visible, setVisible] = useState(false);
-    const [displayed, setDisplayed] = useState('');
-
     useEffect(() => {
         if (!systemMessage) return;
-
-        setDisplayed(systemMessage);
-        setVisible(true);
-
-        const hideTimer = setTimeout(() => {
-            setVisible(false);
-        }, 3000);
-
         const clearTimer = setTimeout(() => {
             dispatch(setSystemMessage(null));
         }, 3400);
-
-        return () => {
-            clearTimeout(hideTimer);
-            clearTimeout(clearTimer);
-        };
+        return () => clearTimeout(clearTimer);
     }, [systemMessage, dispatch]);
 
-    if (!displayed) return null;
+    if (!systemMessage) return null;
 
     return (
         <div
@@ -51,8 +36,7 @@ const GameNotifications = () => {
                 padding: '7px 18px',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.9), 0 0 16px rgba(217,119,6,0.4)',
                 display: 'flex', alignItems: 'center', gap: 7,
-                transition: 'opacity 0.35s ease',
-                opacity: visible ? 1 : 0
+                animation: 'game-notification-fade 3.4s ease both'
             }}>
                 <span style={{ fontSize: 14 }}>🔔</span>
                 <span style={{
@@ -60,7 +44,7 @@ const GameNotifications = () => {
                     textShadow: '0 1px 4px rgba(0,0,0,0.9)',
                     maxWidth: 380, textAlign: 'center'
                 }}>
-                    {displayed}
+                    {systemMessage}
                 </span>
             </div>
         </div>
