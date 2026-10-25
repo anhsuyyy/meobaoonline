@@ -1,0 +1,158 @@
+{
+  "version": "2.0.0",
+  "server": {
+    "tickRateHz": 20,
+    "tickIntervalMs": 50,
+    "port": 3000
+  },
+  "progression": {
+    "expPerLevel": 100,
+    "classSelectionLevel": 5
+  },
+  "classNpc": {
+    "id": "class_master_tram_cao",
+    "name": "Trưởng Lão Linh Miêu",
+    "x": 400,
+    "y": 220,
+    "interactionRadius": 75
+  },
+  "playerDefaults": {
+    "hp": 500,
+    "maxHp": 500,
+    "mp": 200,
+    "maxMp": 200,
+    "atk": 40,
+    "armor": 20,
+    "speed": 5,
+    "mpRegenInCombat": 4,
+    "mpRegenOutOfCombat": 8,
+    "autoFarmRadius": 300,
+    "autoFarmLeashRadius": 320
+  },
+  "classes": {
+    "meo_bao": {
+      "name": "Mèo Báo",
+      "role": "Sát Thủ",
+      "description": "Sát thủ cơ động nhanh nhẹn, đòn đánh dồn dập và bạo kích cao.",
+      "portrait": "/assets/characters/meo-bao/portrait.svg",
+      "counterAdvantage": "meowrie_antoinette",
+      "skills": {
+        "s1": {
+          "id": "s1",
+          "name": "Vuốt Chớp Nhoáng",
+          "key": "SPACE",
+          "mpCost": 2,
+          "cooldownMs": 650,
+          "range": 75,
+          "damageMultiplierMin": 1.0,
+          "damageMultiplierMax": 1.3,
+          "type": "single"
+        },
+        "s3": {
+          "id": "s3",
+          "name": "Bão Móng Vuốt",
+          "key": "Q",
+          "mpCost": 30,
+          "cooldownMs": 8000,
+          "range": 120,
+          "damageMultiplierMin": 2.0,
+          "damageMultiplierMax": 2.9,
+          "hits": 2,
+          "maxTargets": 4,
+          "type": "aoe"
+        }
+      }
+    },
+    "meowrie_antoinette": {
+      "name": "Meowrie Antoinette",
+      "role": "Pháp Sư",
+      "description": "Pháp sư quý tộc điều khiển ma thuật ánh sáng và bánh kem.",
+      "portrait": "/assets/characters/meowrie-antoinette/portrait.svg"
+    },
+    "meo_vu_tru": {
+      "name": "Mèo Vũ Trụ",
+      "role": "Nhà Chiêm Tinh",
+      "description": "Thuật sĩ kiểm soát không gian, tạo hố đen và bão sao băng.",
+      "portrait": "/assets/characters/meo-vu-tru/portrait.svg"
+    },
+    "meo_cu_ta": {
+      "name": "Mèo Cử Tạ",
+      "role": "Đấu Sĩ",
+      "description": "Đỡ đòn tanker dũng mãnh với lượng máu khủng và sức càn quét lớn.",
+      "portrait": "/assets/characters/meo-cu-ta/portrait.svg"
+    }
+  },
+  "monsters": {
+    "chuot_nhat_1": {
+      "id": "chuot_nhat_1",
+      "name": "Chuột Nhắt Đột Biến",
+      "type": "normal",
+      "x": 550,
+      "y": 250,
+      "maxHp": 180,
+      "atk": 15,
+      "speed": 2,
+      "range": 50,
+      "vision": 200,
+      "respawnMs": 8000,
+      "exp": 30,
+      "dtnFactor": 0.1,
+      "goldMin": 15,
+      "goldMax": 35
+    },
+    "chuot_nhat_2": {
+      "id": "chuot_nhat_2",
+      "name": "Chuột Nhắt Tinh Nghịch",
+      "type": "normal",
+      "x": 650,
+      "y": 420,
+      "maxHp": 180,
+      "atk": 15,
+      "speed": 2,
+      "range": 50,
+      "vision": 200,
+      "respawnMs": 8000,
+      "exp": 30,
+      "dtnFactor": 0.1,
+      "goldMin": 15,
+      "goldMax": 35
+    },
+    "nhen_chua_1": {
+      "id": "nhen_chua_1",
+      "name": "Nhện Lông Trạm Cào",
+      "type": "elite",
+      "x": 420,
+      "y": 480,
+      "maxHp": 420,
+      "atk": 25,
+      "speed": 1.8,
+      "range": 50,
+      "vision": 220,
+      "respawnMs": 15000,
+      "exp": 80,
+      "dtnFactor": 0.2,
+      "goldMin": 60,
+      "goldMax": 100
+    }
+  },
+  "quests": {
+    "quest_01": {
+      "id": "quest_01",
+      "title": "Bảo vệ Trạm Cào",
+      "description": "Tiêu diệt 3 quái vật đang quấy nhiễu quanh Trạm Cào",
+      "targetKill": 3,
+      "rewardGold": 100,
+      "rewardDtn": 50,
+      "rewardExp": 100,
+      "unlockFlag": "completed_quest_01"
+    }
+  },
+  "map": {
+    "id": "chuong0_tram_cao",
+    "name": "Chương 0: Trạm Cào",
+    "width": 800,
+    "height": 600,
+    "isSafeZone": true,
+    "allowPvP": false
+  }
+}

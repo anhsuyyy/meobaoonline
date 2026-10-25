@@ -1,0 +1,24 @@
+{
+  "name": "meo-da-vu-tru-online",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Mèo Đa Vũ Trụ Online - 2D Multiplayer Web MMORPG (Phaser + React + Node.js + Socket.io)",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "build:client": "npm --prefix client run build",
+    "test:server": "npm --prefix server test",
+    "test": "npm run test:server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "mongodb": "^7.7.0"
+  }
+}
