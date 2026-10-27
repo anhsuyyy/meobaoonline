@@ -41,7 +41,7 @@ Cập nhật: 27/10/2026
 - Mở các map theo cụm tuyến nhiệm vụ; với từng map rà tile set, nền, điểm spawn, waypoint, NPC, quái, collision và shop.
 - Sau khi khu mở đầu ổn định, mở rộng dần map từ catalog 163 map theo từng cụm có liên kết. Không bật map chỉ vì đã có JSON; phải có tile/background phù hợp, điểm vào/ra và entity cần thiết.
 - Ưu tiên xử lý fallback đang ảnh hưởng trực tiếp: source hiện thiếu ảnh cho 5/80 NPC, 5/84 quái, nhiều icon item và một số nền biome. Dùng danh sách ID thực sự xuất hiện ở map/quest đang làm để chọn ảnh thay thế hoặc giao vẽ.
-- Làm hội thoại/NPC và các nhiệm vụ kế tiếp theo dữ liệu nguồn. Bang hội đã có nền tạo/xem/tham gia/rời, chuyển bang chủ, trục xuất, sửa giới thiệu và chat bang có xác thực thành viên/rate limit; còn lời mời có xác nhận, kho bang, quyền hạn chi tiết và QA nhiều client/MongoDB thật. Model bật optimistic concurrency để tránh ghi đè thay đổi đồng thời giữa các thao tác cập nhật.
+- Làm hội thoại/NPC và các nhiệm vụ kế tiếp theo dữ liệu nguồn. Bang hội đã có tạo/xem/tham gia/rời, chuyển bang chủ, trục xuất, sửa giới thiệu, chat và lời mời có xác nhận; còn kho bang, quyền hạn chi tiết và QA nhiều client/MongoDB thật. Model bật optimistic concurrency để tránh ghi đè thay đổi đồng thời giữa các thao tác cập nhật.
 
 **Nghiệm thu:** từng cụm map có thể đi qua cổng đúng đích, không lọt nền/địa hình lỗi, quái/NPC đúng vị trí và nhiệm vụ có thể hoàn tất.
 
@@ -73,6 +73,13 @@ Cập nhật: 27/10/2026
 Các lần trước ghi sprite có 5 frame là trạng thái asset cũ. Từ kế hoạch này, bộ ảnh mới của mỗi hành động dùng 3 frame riêng; cập nhật loader sau khi nhận asset để giữ tương thích trong lúc chuyển đổi.
 
 **Phạm vi hiện tại:** ưu tiên bản PC. Tạm hoãn tối ưu và nghiệm thu mobile cho tới khi người dùng yêu cầu mở lại phạm vi đó.
+
+### Tiến độ cơ chế bang hội — 27/10/2026
+
+- Bổ sung lời mời theo tên tài khoản: chỉ bang chủ được mời; server kiểm tra username, tư cách bang chủ, tư cách chưa thuộc bang và sức chứa hiện tại.
+- Lời mời được lưu trong MongoDB 24 giờ, có TTL index và có thể nhận lúc đang online hoặc tải lại khi đăng nhập sau. Người nhận có nút tham gia/từ chối trong tab Bang hội; chỉ tài khoản đích mới xử lý được invite ID.
+- Chấp nhận dùng luồng `join` server hiện có để giữ unique membership và kiểm tra sức chứa atomically; lời mời bị từ chối/hết hạn/bang bị giải tán sẽ không thể dùng để gia nhập.
+- Node syntax check cho service/model/socket và client ESLint đạt; chưa chạy test suite hoặc QA hai tài khoản sau thay đổi này. Cần xác nhận với MongoDB thật, đặc biệt race khi hai lời mời được chấp nhận gần như đồng thời.
 
 ### QA trực tiếp PC — 27/10/2026
 

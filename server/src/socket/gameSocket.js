@@ -616,7 +616,7 @@ function setupGameSocket(io, { onTick } = {}) {
         socket.use(([eventName], next) => {
             const group = ['castSkill', 'playerAttack'].includes(eventName) ? 'combat'
                 : ['pickupItem', 'buyNroShopItem', 'openNroShop', 'useNroItem', 'equipNroItem', 'learnNroSkill'].includes(eventName) ? 'inventory'
-                    : ['guildCreate', 'guildJoin', 'guildLeave', 'guildTransferLeadership', 'guildKickMember', 'interactNroNpc', 'nroNpcAction', 'travelNroPlanet', 'travelNroWaypoint', 'toggleAuto'].includes(eventName) ? 'social' : null;
+                : ['guildCreate', 'guildJoin', 'guildLeave', 'guildInviteSend', 'guildInviteRespond', 'guildTransferLeadership', 'guildKickMember', 'interactNroNpc', 'nroNpcAction', 'travelNroPlanet', 'travelNroWaypoint', 'toggleAuto'].includes(eventName) ? 'social' : null;
             if (!group) return next();
             if (!packetBuckets.has(group)) {
                 const policy = group === 'combat' ? { capacity: 8, refillPerSecond: 6 }
@@ -881,16 +881,17 @@ function setupGameSocket(io, { onTick } = {}) {
 
         const sendGuildState = async () => {
             try {
-                const [guild, guilds] = await Promise.all([
-                    guildService.getForUser(socket.user.userId), guildService.list()
+                const [guild, guilds, invitations] = await Promise.all([
+                    guildService.getForUser(socket.user.userId), guildService.list(),
+                    guildService.listInvitations(socket.user.userId)
                 ]);
                 const room = guild ? `guild:${guild.id}` : null;
                 if (socket.guildRoom && socket.guildRoom !== room) socket.leave(socket.guildRoom);
                 socket.guildRoom = room;
                 if (room) socket.join(room);
-                socket.emit('guildState', { ok: true, guild, guilds });
+                socket.emit('guildState', { ok: true, guild, guilds, invitations });
             } catch (error) {
-                socket.emit('guildState', { ok: false, guild: null, guilds: [], message: error.message || 'Không tải được dữ liệu bang hội.' });
+                socket.emit('guildState', { ok: false, guild: null, guilds: [], invitations: [], message: error.message || 'Không tải được dữ liệu bang hội.' });
             }
         };
         const refreshGuildRoom = (room) => {
@@ -915,6 +916,48 @@ function setupGameSocket(io, { onTick } = {}) {
                 socket.emit('guildResult', { ok: true, message: 'Đã tham gia bang hội.' });
             } catch (error) {
                 socket.emit('guildResult', { ok: false, message: error.message || 'Không thể tham gia bang hội.' });
+            }
+        });
+        socket.on('guildInviteSend', async (payload = {}) => {
+            try {
+                const result = await guildService.inviteMember({
+                    userId: socket.user.userId, username: socket.user.username,
+                    targetUsername: payload && typeof payload === 'object' ? payload.targetUsername : ''
+                });
+                const targets = [...io.sockets.sockets.values()].filter((candidate) =>
+                    String(candidate.user?.userId) === result.targetUserId);
+                for (const target of targets) {
+                    target.emit('guildInvitationReceived', result.invitation);
+                }
+                socket.emit('guildResult', {
+                    ok: true, message: `Đã gửi lời mời vào bang ${result.invitation.guildName} cho ${result.targetUsername}.`
+                });
+            } catch (error) {
+                socket.emit('guildResult', { ok: false, message: error.message || 'Không gửi được lời mời bang hội.' });
+            }
+        });
+        socket.on('guildInviteRespond', async (payload = {}) => {
+            let result;
+            try {
+                result = await guildService.respondToInvitation({
+                    userId: socket.user.userId,
+                    invitationId: payload && typeof payload === 'object' ? payload.invitationId : null,
+                    accept: payload?.accept === true
+                });
+                await sendGuildState();
+                if (result.accepted) refreshGuildRoom(`guild:${result.guildId}`);
+                const inviterSockets = [...io.sockets.sockets.values()].filter((candidate) =>
+                    String(candidate.user?.userId) === result.inviterId);
+                const message = result.accepted
+                    ? `${socket.user.username} đã tham gia bang ${result.guildName}.`
+                    : `${socket.user.username} đã từ chối lời mời vào bang ${result.guildName}.`;
+                for (const candidate of inviterSockets) candidate.emit('guildResult', { ok: true, message });
+                socket.emit('guildResult', {
+                    ok: true,
+                    message: result.accepted ? `Bạn đã tham gia bang ${result.guildName}.` : 'Đã từ chối lời mời bang hội.'
+                });
+            } catch (error) {
+                socket.emit('guildResult', { ok: false, message: error.message || 'Không xử lý được lời mời bang hội.' });
             }
         });
         socket.on('guildLeave', async () => {

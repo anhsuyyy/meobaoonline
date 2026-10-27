@@ -7,6 +7,7 @@ import { getNroSkillIcon } from './nroSkillIcon';
 import { getNroItemIcon } from './nroItemIcon';
 
 const EQUIPMENT_TYPES = ['Áo', 'Quần', 'Găng', 'Giày', 'Rada'];
+const EMPTY_BAG = [];
 const SKILL_BOOK_RANGES = {
     earth: [[94, 100], [115, 121], [300, 306], [307, 313], [434, 440]],
     namek: [[101, 107], [122, 128], [328, 334], [335, 341], [481, 487]],
@@ -64,7 +65,7 @@ export default function NroInventoryPanel() {
     const game = useSelector((state) => state.game);
     const { character, level, skillConfig, skillLevels, user, hp, maxHp, mp, maxMp, str, armor, crit, dtn, gold, stamina, maxStamina } = game;
     const nroCharacter = character?.nroCharacter;
-    const bag = nroCharacter?.bag || [];
+    const bag = nroCharacter?.bag || EMPTY_BAG;
     const equipment = nroCharacter?.equipment || {};
     // The panel mounts before character creation; it becomes visible naturally
     // once the character exists, without an effect-triggered extra render.
@@ -80,6 +81,7 @@ export default function NroInventoryPanel() {
     const [task, setTask] = useState(null);
     const [guildState, setGuildState] = useState({ guild: null, guilds: [], loading: false });
     const [guildName, setGuildName] = useState('');
+    const [guildInviteUsername, setGuildInviteUsername] = useState('');
     const [guildDescription, setGuildDescription] = useState('');
     const [guildChatDraft, setGuildChatDraft] = useState('');
     const [guildChat, setGuildChat] = useState([]);
@@ -157,16 +159,26 @@ export default function NroInventoryPanel() {
         const onResult = (payload = {}) => setMessage(payload.message || '');
         const onGuildRefresh = () => socket.emit('guildRefreshRequest');
         const onGuildChat = (entry) => setGuildChat((current) => [...current, entry].slice(-40));
+        const onGuildInvitation = (invitation) => {
+            setGuildState((state) => ({
+                ...state,
+                invitations: [invitation, ...(state.invitations || []).filter((entry) => entry.id !== invitation.id)]
+                    .slice(0, 20)
+            }));
+            setMessage(`Bang ${invitation.guildName} mời bạn tham gia.`);
+        };
         socket.on('guildState', onState);
         socket.on('guildResult', onResult);
         socket.on('guildRefresh', onGuildRefresh);
         socket.on('guildChatMessage', onGuildChat);
+        socket.on('guildInvitationReceived', onGuildInvitation);
         socket.emit('guildRequestState');
         return () => {
             socket.off('guildState', onState);
             socket.off('guildResult', onResult);
             socket.off('guildRefresh', onGuildRefresh);
             socket.off('guildChatMessage', onGuildChat);
+            socket.off('guildInvitationReceived', onGuildInvitation);
         };
     }, []);
 
@@ -286,7 +298,7 @@ export default function NroInventoryPanel() {
                     <div className="nro-bag-capacity">Hành trang <b>{bagGroups.length}/{nroCharacter.bagCapacity || 20}</b></div>
                     <div className="nro-item-list">
                         {bagGroups.map((group) => {
-                            const { slot, item, index, quantity } = group;
+                            const { item, index, quantity } = group;
                             return <article key={group.key} tabIndex={0} role="button"
                                 aria-label={`${item.name}, số lượng ${quantity}`}
                                 onClick={() => { setSelectedBagIndex(index); setDetailSkillId(null); }}
@@ -396,6 +408,21 @@ export default function NroInventoryPanel() {
                 {activeTab === 'Bang hội' && <section className="nro-guild-panel">
                     <h3>Bang hội</h3>
                     {guildState.loading && <p className="nro-panel-empty">Đang tải dữ liệu bang hội…</p>}
+                    {(guildState.invitations || []).length > 0 && <>
+                        <h4>Lời mời đang chờ</h4>
+                        <div className="nro-guild-list nro-guild-invitations">
+                            {guildState.invitations.map((invitation) => <article key={invitation.id}>
+                                <div>
+                                    <strong>{invitation.guildName}</strong>
+                                    <small>Bang chủ {invitation.inviterUsername}</small>
+                                </div>
+                                <span className="nro-guild-member-actions">
+                                    <button type="button" onClick={() => networkInstance.getSocket()?.emit('guildInviteRespond', { invitationId: invitation.id, accept: true })}>Tham gia</button>
+                                    <button type="button" onClick={() => networkInstance.getSocket()?.emit('guildInviteRespond', { invitationId: invitation.id, accept: false })}>Từ chối</button>
+                                </span>
+                            </article>)}
+                        </div>
+                    </>}
                     {guildState.guild && <>
                         <div className="nro-guild-card">
                             <strong>{guildState.guild.name}</strong>
@@ -416,6 +443,16 @@ export default function NroInventoryPanel() {
                         }}>
                             <label>Giới thiệu bang <input value={guildDescription} maxLength={120} onChange={(event) => setGuildDescription(event.target.value)} /></label>
                             <button type="submit" className="nro-guild-action">Lưu giới thiệu</button>
+                        </form>}
+                        {guildState.guild.isLeader && <form className="nro-guild-create" onSubmit={(event) => {
+                            event.preventDefault();
+                            const targetUsername = guildInviteUsername.trim();
+                            if (!targetUsername) return;
+                            networkInstance.getSocket()?.emit('guildInviteSend', { targetUsername });
+                            setGuildInviteUsername('');
+                        }}>
+                            <label>Mời người chơi <input value={guildInviteUsername} maxLength={30} minLength={3} required onChange={(event) => setGuildInviteUsername(event.target.value)} placeholder="Tên tài khoản" /></label>
+                            <button type="submit" className="nro-guild-action">Gửi lời mời</button>
                         </form>}
                         <h4>Chat bang</h4>
                         <div className="nro-guild-chat" aria-live="polite">{guildChat.map((entry, index) => <p key={`${entry.sentAt}-${index}`}><b>{entry.username}:</b> {entry.text}</p>)}</div>

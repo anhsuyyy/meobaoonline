@@ -30,6 +30,17 @@ class UserRepository {
         }
     }
 
+    async findIdentityByUsername(username) {
+        requireDatabase();
+        const cleanName = String(username || '').toLowerCase().trim();
+        if (!cleanName) return null;
+        try {
+            return await User.findOne({ username: cleanName }).select('_id username').lean();
+        } catch (error) {
+            throw markDatabaseError(error);
+        }
+    }
+
     async findById(id) {
         requireDatabase();
         try {
