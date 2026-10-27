@@ -1,53 +1,45 @@
+import { lazy, Suspense } from 'react';
 import { Provider } from 'react-redux';
 import { store } from './store';
-import GameCanvas from './game/GameCanvas';
-import GameHUD from './features/hud/GameHUD';
 import AuthModal from './features/auth/AuthModal';
-import ClassSelectionModal from './features/auth/ClassSelectionModal';
 import { useSelector } from 'react-redux';
+
+const GameCanvas = lazy(() => import('./game/GameCanvas'));
+const GameHUD = lazy(() => import('./features/hud/GameHUD'));
+const NroCharacterCreationModal = lazy(() => import('./features/auth/NroCharacterCreationModal'));
 
 /**
  * App - Root component
  * Layout 16:9 responsive: tối đa 1440×810, giữa màn hình, viền vàng đồng
  */
 function AppContent() {
-    const isAuthenticated = useSelector((state) => state.game.user.isAuthenticated);
+    const { isAuthenticated } = useSelector((state) => state.game.user);
+    const character = useSelector((state) => state.game.character);
+    const shouldShowRotateHint = isAuthenticated && character?.nroCharacter?.created;
 
     return (
-        <div style={{
-                width: '100vw',
-                height: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'radial-gradient(ellipse at center, #0d1810 0%, #020617 100%)',
-                overflow: 'hidden'
-            }}>
-                {/* Khung game 16:9 responsive */}
-                <div style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: '100%',
-                    maxWidth: 1440,
-                    maxHeight: 810,
-                    aspectRatio: '16/9',
-                    borderRadius: 10,
-                    overflow: 'hidden',
-                    border: '2px solid #b45309',
-                    outline: '1px solid #78350f',
-                    boxShadow: '0 0 50px rgba(180,83,9,0.3), 0 0 120px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,0,0,0.5)'
-                }}>
+        <main className={`nro-app-shell ${isAuthenticated ? 'nro-app-shell--playing' : ''}`}>
+                <div className="nro-game-frame">
                     {isAuthenticated ? (
                         <>
-                            <GameCanvas />
-                            <GameHUD />
-                            <ClassSelectionModal />
+                            <Suspense fallback={<div className="game-loading" role="status">Đang tải thế giới game…</div>}>
+                                <GameCanvas />
+                            </Suspense>
+                            <Suspense fallback={null}>
+                                <GameHUD />
+                                <NroCharacterCreationModal />
+                            </Suspense>
                         </>
                     ) : (
                         <AuthModal />
                     )}
                 </div>
-        </div>
+                {shouldShowRotateHint && <div className="nro-rotate-hint" role="status">
+                    <span className="nro-rotate-icon" aria-hidden="true" />
+                    <strong>Hãy xoay ngang thiết bị</strong>
+                    <span>Thế giới Ngọc Rồng được thiết kế theo khung hình ngang.</span>
+                </div>}
+        </main>
     );
 }
 

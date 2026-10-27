@@ -1,20 +1,84 @@
 {
   "version": "2.0.0",
+  "gameMode": "nro",
+  "nroWorld": {
+    "mapId": 0,
+    "tileSize": 24,
+    "runSpeedPxPerSecond": 200,
+    "flightSpeedPxPerSecond": 200,
+    "flightKiPerSecond": 1,
+    "flightHoverDurationMs": 1000,
+    "gravityPxPerSecondSquared": 1200,
+    "jumpVelocityPxPerSecond": 430,
+    "maxFallSpeedPxPerSecond": 720,
+    "spawn": {
+      "x": 60,
+      "y": 384
+    },
+    "playableMapIds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      7,
+      8,
+      9,
+      11,
+      12,
+      14,
+      15,
+      16,
+      17,
+      18,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      42,
+      43,
+      44,
+      46,
+      47
+    ]
+  },
   "server": {
-    "tickRateHz": 20,
-    "tickIntervalMs": 50,
+    "tickRateHz": 30,
+    "tickIntervalMs": 33,
     "port": 3000
   },
-  "progression": {
-    "expPerLevel": 100,
-    "classSelectionLevel": 5
+  "world": {
+    "pixelsPerMeter": 10,
+    "pickupRangeMeters": 6
   },
-  "classNpc": {
-    "id": "class_master_tram_cao",
-    "name": "Trưởng Lão Linh Miêu",
-    "x": 400,
-    "y": 220,
-    "interactionRadius": 75
+  "movement": {
+    "baseSpeedMetersPerSecond": 20,
+    "agiBonusPixelsPerSecond": 0.1
+  },
+  "attackSpeed": {
+    "agiReductionMsPerPoint": 2,
+    "minimumBasicCooldownMs": 400
+  },
+  "skills": {
+    "maxLevel": 7,
+    "defaultLevel": 1,
+    "singleTargetRangeMeters": 5,
+    "projectileRangeMeters": 20
+  },
+  "autoFarm": {
+    "targetRadiusMeters": 30,
+    "engageRangeMeters": 5.5,
+    "leashRadiusMeters": 32
+  },
+  "progression": {
+    "expPerLevel": 100
   },
   "playerDefaults": {
     "hp": 500,
@@ -22,162 +86,112 @@
     "mp": 200,
     "maxMp": 200,
     "atk": 40,
+    "str": 40,
     "armor": 20,
-    "speed": 5,
+    "agi": 0,
     "mpRegenInCombat": 4,
-    "mpRegenOutOfCombat": 8,
-    "autoFarmRadius": 300,
-    "autoFarmLeashRadius": 320
+    "mpRegenOutOfCombat": 8
   },
   "basicAttack": {
     "id": "basic",
     "name": "Đánh thường",
     "mpCost": 0,
-    "cooldownMs": 500,
-    "range": 75,
-    "damageMultiplierMin": 1.0,
-    "damageMultiplierMax": 1.2,
-    "type": "single"
-  },
-  "classes": {
-    "meo_bao": {
-      "name": "Mèo Báo",
-      "role": "Sát Thủ",
-      "description": "Sát thủ cơ động nhanh nhẹn, đòn đánh dồn dập và bạo kích cao.",
-      "portrait": "/assets/characters/meo-bao/portrait.svg",
-      "counterAdvantage": "meowrie_antoinette",
-      "skills": {
-        "s1": {
-          "id": "s1",
-          "name": "Vuốt Chớp Nhoáng",
-          "key": "SPACE",
-          "mpCost": 2,
-          "cooldownMs": 650,
-          "range": 75,
-          "damageMultiplierMin": 1.0,
-          "damageMultiplierMax": 1.3,
-          "type": "single"
-        },
-        "s3": {
-          "id": "s3",
-          "name": "Bão Móng Vuốt",
-          "key": "Q",
-          "mpCost": 35,
-          "cooldownMs": 8000,
-          "range": 120,
-          "damageMultiplierMin": 2.0,
-          "damageMultiplierMax": 2.9,
-          "hits": 2,
-          "maxTargets": 4,
-          "type": "aoe"
-        },
-        "s2": {
-          "id": "s2",
-          "name": "Cào Lửa Nguyên Tố",
-          "key": "2",
-          "mpCost": 15,
-          "cooldownMs": 2000,
-          "range": 150,
-          "damageMultiplierMin": 1.2,
-          "damageMultiplierMax": 1.5,
-          "type": "single"
-        },
-        "s4": {
-          "id": "s4",
-          "name": "Tiếng Gầm Sư Tử Mèo",
-          "key": "4",
-          "mpCost": 50,
-          "cooldownMs": 8000,
-          "range": 120,
-          "damageMultiplierMin": 0.8,
-          "damageMultiplierMax": 1.1,
-          "maxTargets": 4,
-          "type": "aoe"
-        },
-        "s5": {
-          "id": "s5",
-          "name": "Cỏ Mèo Hồi Máu",
-          "key": "5",
-          "mpCost": 100,
-          "cooldownMs": 12000,
-          "healAmount": 120,
-          "type": "heal"
-        }
-      }
-    },
-    "meowrie_antoinette": {
-      "name": "Meowrie Antoinette",
-      "role": "Pháp Sư",
-      "description": "Pháp sư quý tộc điều khiển ma thuật ánh sáng và bánh kem.",
-      "portrait": "/assets/characters/meowrie-antoinette/portrait.svg"
-    },
-    "meo_vu_tru": {
-      "name": "Mèo Vũ Trụ",
-      "role": "Nhà Chiêm Tinh",
-      "description": "Thuật sĩ kiểm soát không gian, tạo hố đen và bão sao băng.",
-      "portrait": "/assets/characters/meo-vu-tru/portrait.svg"
-    },
-    "meo_cu_ta": {
-      "name": "Mèo Cử Tạ",
-      "role": "Đấu Sĩ",
-      "description": "Đỡ đòn tanker dũng mãnh với lượng máu khủng và sức càn quét lớn.",
-      "portrait": "/assets/characters/meo-cu-ta/portrait.svg"
-    }
+    "cooldownMs": 650,
+    "rangePx": 50,
+    "damagePercent": 100,
+    "type": "melee"
   },
   "monsters": {
-    "chuot_nhat_1": {
-      "id": "chuot_nhat_1",
-      "name": "Chuột Nhắt Đột Biến",
+    "moc_nhan_1": {
+      "id": "moc_nhan_1",
+      "name": "Mộc nhân",
       "type": "normal",
-      "x": 550,
-      "y": 250,
-      "maxHp": 180,
-      "atk": 15,
-      "speed": 2,
-      "range": 50,
-      "vision": 200,
+      "templateId": 0,
+      "x": 660,
+      "y": 432,
+      "maxHp": 100,
+      "atk": 5,
+      "speedPxPerSecond": 0,
+      "attackRangeMeters": 1,
+      "visionMeters": 0,
+      "attackCooldownMs": 1000,
       "respawnMs": 8000,
-      "exp": 30,
+      "exp": 5,
       "dtnFactor": 0.1,
-      "goldMin": 15,
-      "goldMax": 35
+      "goldMin": 0,
+      "goldMax": 1
     },
-    "chuot_nhat_2": {
-      "id": "chuot_nhat_2",
-      "name": "Chuột Nhắt Tinh Nghịch",
+    "moc_nhan_2": {
+      "id": "moc_nhan_2",
       "type": "normal",
-      "x": 650,
-      "y": 420,
-      "maxHp": 180,
-      "atk": 15,
-      "speed": 2,
-      "range": 50,
-      "vision": 200,
+      "name": "Mộc nhân",
+      "templateId": 0,
+      "x": 780,
+      "y": 432,
+      "maxHp": 100,
+      "atk": 5,
+      "speedPxPerSecond": 0,
+      "attackRangeMeters": 1,
+      "visionMeters": 0,
+      "attackCooldownMs": 1000,
       "respawnMs": 8000,
-      "exp": 30,
+      "exp": 5,
       "dtnFactor": 0.1,
-      "goldMin": 15,
-      "goldMax": 35
+      "goldMin": 0,
+      "goldMax": 1
     },
-    "nhen_chua_1": {
-      "id": "nhen_chua_1",
-      "name": "Nhện Lông Trạm Cào",
-      "type": "elite",
-      "x": 420,
-      "y": 480,
-      "maxHp": 420,
-      "atk": 25,
-      "speed": 1.8,
-      "range": 50,
-      "vision": 220,
-      "respawnMs": 15000,
-      "exp": 80,
-      "dtnFactor": 0.2,
-      "goldMin": 60,
-      "goldMax": 100
+    "moc_nhan_3": {
+      "id": "moc_nhan_3",
+      "name": "Mộc nhân",
+      "type": "normal",
+      "templateId": 0,
+      "x": 900,
+      "y": 432,
+      "maxHp": 100,
+      "atk": 5,
+      "speedPxPerSecond": 0,
+      "attackRangeMeters": 1,
+      "visionMeters": 0,
+      "attackCooldownMs": 1200,
+      "respawnMs": 8000,
+      "exp": 5,
+      "dtnFactor": 0.1,
+      "goldMin": 0,
+      "goldMax": 1
+    },
+    "moc_nhan_4": {
+      "id": "moc_nhan_4",
+      "name": "Mộc nhân",
+      "type": "normal",
+      "templateId": 0,
+      "x": 1020,
+      "y": 432,
+      "maxHp": 100,
+      "atk": 5,
+      "speedPxPerSecond": 0,
+      "attackRangeMeters": 1,
+      "visionMeters": 0,
+      "attackCooldownMs": 1000,
+      "respawnMs": 8000,
+      "exp": 5,
+      "dtnFactor": 0.1,
+      "goldMin": 0,
+      "goldMax": 1
     }
   },
   "quests": {
+    "nroTaskRewards": {
+      "task1": {
+        "power": 500,
+        "potential": 500,
+        "strength": 500
+      },
+      "task2": {
+        "power": 1500,
+        "potential": 1500,
+        "gold": 300000000
+      }
+    },
     "quest_01": {
       "id": "quest_01",
       "title": "Bảo vệ Trạm Cào",
@@ -190,10 +204,10 @@
     }
   },
   "map": {
-    "id": "chuong0_tram_cao",
-    "name": "Chương 0: Trạm Cào",
-    "width": 800,
-    "height": 600,
+    "id": "nro_0",
+    "name": "Làng Aru",
+    "width": 1248,
+    "height": 576,
     "isSafeZone": true,
     "allowPvP": false
   }

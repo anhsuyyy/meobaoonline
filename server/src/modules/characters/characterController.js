@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../../infrastructure/http/authMiddleware');
 const userRepository = require('../auth/userRepository');
-const gameConfig = require('../../config/gameConfig.json');
 
 router.get('/me', authenticateToken, async (req, res) => {
     try {
@@ -15,12 +14,7 @@ router.get('/me', authenticateToken, async (req, res) => {
         }
 
         return res.json({
-            character: {
-                ...user.character,
-                className: user.character.classId
-                    ? gameConfig.classes[user.character.classId]?.name || null
-                    : null
-            }
+            character: { ...user.character }
         });
     } catch {
         return res.status(503).json({ error: 'Không thể tải nhân vật do lỗi kết nối dữ liệu. Vui lòng thử lại.' });

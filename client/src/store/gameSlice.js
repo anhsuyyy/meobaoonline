@@ -1,5 +1,4 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { mockMapInfo, mockTargetStatus } from '../features/hud/hudMockData';
 
 const initialState = {
     playerId: null,
@@ -12,28 +11,38 @@ const initialState = {
     character: null,
     characterLoading: false,
     characterError: null,
-    classSelection: {
-        isOpen: false,
-        isSaving: false,
-        error: null,
-        npc: null,
-        classes: []
-    },
     hp: 0,
     maxHp: 500,
     mp: 0,
     maxMp: 200,
+    respawnRemainingMs: 0,
+    stamina: 1000,
+    maxStamina: 1000,
     exp: 0,
     maxExp: 100,
     gold: 0,
+    blueGems: 0,
     dtn: 0,
+    power: 0,
+    str: 0,
+    armor: 0,
+    crit: 0,
+    damageReductionPercent: 0,
+    reflectDamagePercent: 0,
     level: 1,
-    className: null,
+    skillConfig: null,
+    skillLevels: {},
+    skillCooldowns: {},
+    activeSkillId: 'basic',
+    isFlying: false,
     isAuto: false,
     autoAnchor: null,
     playerPos: { x: 200, y: 300 },
-    selectedTarget: mockTargetStatus,
-    mapInfo: mockMapInfo,
+    selectedTarget: null,
+    mapInfo: {
+        zoneName: 'Làng Aru', subArea: 'Khu vực an toàn', channel: 'Khu 0',
+        serverTime: '', fps: 0, ping: null, isSafeZone: true
+    },
     quest: {
         id: 'quest_01',
         title: 'Bảo vệ Trạm Cào',
@@ -52,12 +61,21 @@ function applyCharacter(state, character) {
     state.maxHp = character.maxHp;
     state.mp = character.mp;
     state.maxMp = character.maxMp;
+    state.respawnRemainingMs = 0;
+    state.stamina = character.nroCharacter?.stamina ?? state.stamina;
+    state.maxStamina = character.nroCharacter?.maxStamina ?? state.maxStamina;
     state.exp = character.exp;
     state.maxExp = character.maxExp;
     state.gold = character.gold;
+    state.blueGems = Math.max(0, Number(character.nroCharacter?.blueGems ?? character.blueGems) || 0);
     state.dtn = character.dtn;
+    state.power = character.power ?? character.dtn ?? 0;
+    state.str = Number(character.str ?? character.nroCharacter?.nroStats?.damage) || 0;
+    state.armor = Number(character.armor ?? character.nroCharacter?.nroStats?.defense) || 0;
+    state.crit = Number(character.crit ?? character.nroCharacter?.nroStats?.critical) || 0;
+    state.damageReductionPercent = Number(character.nroDamageReductionPercent ?? character.nroCharacter?.nroDamageReductionPercent) || 0;
+    state.reflectDamagePercent = Number(character.nroReflectDamagePercent ?? character.nroCharacter?.nroReflectDamagePercent) || 0;
     state.level = character.level;
-    state.className = character.className;
     state.playerPos = character.position || state.playerPos;
     state.quest.progress = character.questProgress || 0;
     state.quest.status = character.questCompleted ? 'completed' : 'accepted';
@@ -81,11 +99,13 @@ export const gameSlice = createSlice({
             state.playerId = null;
             state.isAuto = false;
             state.autoAnchor = null;
+            state.skillConfig = null;
+            state.skillLevels = {};
+            state.skillCooldowns = {};
+            state.activeSkillId = 'basic';
+            state.isFlying = false;
             state.selectedTarget = null;
-            state.classSelection = initialState.classSelection;
-            state.systemMessage = character.classId
-                ? `Chào mừng trở lại, ${user.username}!`
-                : `Chào mừng ${user.username}! Hãy luyện cấp đến Lv.5 rồi tìm NPC chọn class.`;
+            state.systemMessage = `Chào mừng ${user.username}!`;
         },
         setCharacterLoading: (state, action) => {
             state.characterLoading = action.payload;
@@ -100,15 +120,18 @@ export const gameSlice = createSlice({
             state.chatMessages = [];
             state.characterLoading = false;
             state.characterError = null;
-            state.classSelection = initialState.classSelection;
             state.playerId = null;
             state.hp = 0;
             state.mp = 0;
+            state.respawnRemainingMs = 0;
             state.level = 1;
             state.exp = 0;
             state.gold = 0;
+            state.blueGems = 0;
             state.dtn = 0;
-            state.className = null;
+            state.power = 0;
+            state.activeSkillId = 'basic';
+            state.isFlying = false;
             state.systemMessage = 'Đã đăng xuất. Đăng nhập lại để tiếp tục.';
         },
         setAuthModalOpen: (state, action) => {
@@ -116,27 +139,61 @@ export const gameSlice = createSlice({
         },
         updateStats: (state, action) => {
             const p = action.payload;
-            const previousLevel = state.level;
             if (p.hp !== undefined) state.hp = p.hp;
             if (p.maxHp !== undefined) state.maxHp = p.maxHp;
             if (p.mp !== undefined) state.mp = p.mp;
             if (p.maxMp !== undefined) state.maxMp = p.maxMp;
+            if (p.respawnRemainingMs !== undefined) {
+                state.respawnRemainingMs = Math.max(0, Number(p.respawnRemainingMs) || 0);
+            }
+            if (p.stamina !== undefined) state.stamina = p.stamina;
+            if (p.maxStamina !== undefined) state.maxStamina = p.maxStamina;
+            if (p.isFlying !== undefined) state.isFlying = Boolean(p.isFlying);
             if (p.gold !== undefined) state.gold = p.gold;
+            if (p.blueGems !== undefined) {
+                state.blueGems = Math.max(0, Number(p.blueGems) || 0);
+                if (state.character?.nroCharacter) state.character.nroCharacter.blueGems = state.blueGems;
+            }
             if (p.dtn !== undefined) state.dtn = p.dtn;
+            if (p.power !== undefined) state.power = p.power;
+            if (p.str !== undefined) state.str = p.str;
+            if (p.armor !== undefined) state.armor = p.armor;
+            if (p.crit !== undefined) state.crit = p.crit;
+            if (p.damageReductionPercent !== undefined) state.damageReductionPercent = p.damageReductionPercent;
+            if (p.reflectDamagePercent !== undefined) state.reflectDamagePercent = p.reflectDamagePercent;
             if (p.exp !== undefined) state.exp = p.exp;
             if (p.maxExp !== undefined) state.maxExp = p.maxExp;
             if (p.level !== undefined) state.level = p.level;
+            if (p.str !== undefined && state.character) state.character.str = p.str;
+            if (p.armor !== undefined && state.character) state.character.armor = p.armor;
+            if (p.nroStats && state.character?.nroCharacter) state.character.nroCharacter.nroStats = p.nroStats;
+            if (p.limitPower !== undefined && state.character?.nroCharacter) state.character.nroCharacter.limitPower = p.limitPower;
             if (p.username) state.user.username = p.username;
             if (state.character) {
                 Object.assign(state.character, {
                     hp: state.hp, maxHp: state.maxHp, mp: state.mp, maxMp: state.maxMp,
-                    gold: state.gold, dtn: state.dtn, exp: state.exp, maxExp: state.maxExp,
+                    gold: state.gold, dtn: state.dtn, power: state.power, exp: state.exp, maxExp: state.maxExp,
                     level: state.level
                 });
+                if (p.nroStats && state.character.nroCharacter) state.character.nroCharacter.nroStats = p.nroStats;
             }
-            if (previousLevel < 5 && state.level >= 5) {
-                state.systemMessage = 'Bạn đã đạt Lv.5! Hãy đến gặp Trưởng Lão Linh Miêu để chọn class.';
-            }
+        },
+        setSkillConfig: (state, action) => {
+            state.skillConfig = action.payload.skills;
+            state.skillLevels = action.payload.levels || {};
+        },
+        setActiveSkill: (state, action) => {
+            state.activeSkillId = action.payload || 'basic';
+        },
+        recordSkillSuccess: (state, action) => {
+            const { skillId, cooldownMs, endsAt } = action.payload;
+            state.skillCooldowns[skillId] = {
+                durationMs: cooldownMs,
+                endsAt: endsAt || Date.now() + cooldownMs
+            };
+        },
+        clearSkillCooldowns: (state) => {
+            state.skillCooldowns = {};
         },
         setPlayerPos: (state, action) => {
             state.playerPos = action.payload;
@@ -150,8 +207,7 @@ export const gameSlice = createSlice({
         },
         updateTargetHp: (state, action) => {
             if (state.selectedTarget && state.selectedTarget.id === action.payload.id) {
-                state.selectedTarget.hp = action.payload.hp;
-                if (action.payload.maxHp) state.selectedTarget.maxHp = action.payload.maxHp;
+                Object.assign(state.selectedTarget, action.payload);
                 if (action.payload.hp <= 0) state.selectedTarget = null;
             }
         },
@@ -172,34 +228,14 @@ export const gameSlice = createSlice({
             if (state.character) state.character.questCompleted = true;
             state.systemMessage = `🎉 Hoàn thành nhiệm vụ: ${action.payload.title}! Nhận +${action.payload.rewardGold} Vàng, +${action.payload.rewardDtn} ĐTN!`;
         },
-        openClassSelection: (state, action) => {
-            state.classSelection = {
-                isOpen: true,
-                isSaving: false,
-                error: null,
-                npc: action.payload.npc,
-                classes: action.payload.classes
-            };
+        setNroCharacter: (state, action) => {
+            if (state.character) state.character.nroCharacter = action.payload;
         },
-        setClassSelectionSaving: (state, action) => {
-            state.classSelection.isSaving = action.payload;
-            state.classSelection.error = null;
+        setNroBag: (state, action) => {
+            if (state.character?.nroCharacter) state.character.nroCharacter.bag = action.payload;
         },
-        setClassSelectionError: (state, action) => {
-            state.classSelection.isSaving = false;
-            state.classSelection.error = action.payload;
-        },
-        classSelectionSucceeded: (state, action) => {
-            applyCharacter(state, action.payload.character);
-            state.classSelection.isOpen = false;
-            state.classSelection.isSaving = false;
-            state.classSelection.error = null;
-            state.systemMessage = action.payload.message;
-        },
-        closeClassSelection: (state) => {
-            state.classSelection.isOpen = false;
-            state.classSelection.isSaving = false;
-            state.classSelection.error = null;
+        setNroEquipment: (state, action) => {
+            if (state.character?.nroCharacter) state.character.nroCharacter.equipment = action.payload || {};
         },
         setSystemMessage: (state, action) => {
             state.systemMessage = action.payload;
@@ -237,6 +273,10 @@ export const {
     logoutUser,
     setAuthModalOpen,
     updateStats,
+    setSkillConfig,
+    setActiveSkill,
+    recordSkillSuccess,
+    clearSkillCooldowns,
     setPlayerPos,
     setSelectedTarget,
     clearSelectedTarget,
@@ -244,11 +284,9 @@ export const {
     setAutoFarmState,
     updateQuestProgress,
     setQuestCompleted,
-    openClassSelection,
-    setClassSelectionSaving,
-    setClassSelectionError,
-    classSelectionSucceeded,
-    closeClassSelection,
+    setNroCharacter,
+    setNroBag,
+    setNroEquipment,
     setSystemMessage,
     toggleChat,
     receiveChatHistory,

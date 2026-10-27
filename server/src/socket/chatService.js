@@ -25,6 +25,7 @@ function createChatService(io, { now = Date.now, idFactory = randomUUID } = {}) 
     };
     const lastSentByUser = new Map();
     let sequence = 0;
+    const areaKey = (mapId, zoneId = 0) => `${Number(mapId)}:${Number(zoneId) || 0}`;
 
     function remember(history, message) {
         history.push(message);
@@ -48,12 +49,12 @@ function createChatService(io, { now = Date.now, idFactory = randomUUID } = {}) 
         return message;
     }
 
-    function getHistory({ mapId, partyId }) {
+    function getHistory({ mapId, zoneId = 0, partyId }) {
         return {
             channels: {
                 world: histories.world.slice(-HISTORY_LIMIT),
                 system: histories.system.slice(-HISTORY_LIMIT),
-                area: (histories.area.get(mapId) || []).slice(-HISTORY_LIMIT),
+                area: (histories.area.get(areaKey(mapId, zoneId)) || []).slice(-HISTORY_LIMIT),
                 party: partyId ? (histories.party.get(partyId) || []).slice(-HISTORY_LIMIT) : []
             }
         };
@@ -91,7 +92,7 @@ function createChatService(io, { now = Date.now, idFactory = randomUUID } = {}) 
             messageId: idFactory(),
             sequence: ++sequence,
             senderId: userId,
-            senderName: socket.user.username,
+            senderName: socket.user.characterName || socket.user.username,
             channel,
             timestamp: new Date(currentTime).toISOString(),
             text
@@ -103,10 +104,12 @@ function createChatService(io, { now = Date.now, idFactory = randomUUID } = {}) 
             io.emit('chatMessage', message);
         } else if (channel === 'area') {
             const mapId = socket.mapId;
-            if (!mapId) return { ok: false, error: 'Không xác định được khu vực hiện tại.' };
-            if (!histories.area.has(mapId)) histories.area.set(mapId, []);
-            remember(histories.area.get(mapId), message);
-            io.to(`map_${mapId}`).emit('chatMessage', message);
+            if (mapId === undefined || mapId === null) return { ok: false, error: 'Không xác định được khu vực hiện tại.' };
+            const zoneId = Number(socket.zoneId) || 0;
+            const key = areaKey(mapId, zoneId);
+            if (!histories.area.has(key)) histories.area.set(key, []);
+            remember(histories.area.get(key), message);
+            io.to(socket.areaRoom || `map_${mapId}_zone_${zoneId}`).emit('chatMessage', message);
         } else {
             if (!histories.party.has(partyId)) histories.party.set(partyId, []);
             remember(histories.party.get(partyId), message);

@@ -2,14 +2,22 @@
 
 :root {
   color-scheme: dark;
+  --hud-panel: rgba(10, 15, 18, 0.84);
+  --hud-panel-strong: rgba(5, 9, 12, 0.94);
+  --hud-border: rgba(212, 132, 37, 0.78);
+  --hud-accent: #f6b94b;
+  --hud-radius: 10px;
+  --hud-shadow: 0 4px 18px rgba(0, 0, 0, 0.62);
 }
+
+html, body { width: 100%; height: 100%; }
 
 body {
   margin: 0;
   padding: 0;
   background-color: #020617;
   color: #f8fafc;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: 'Nunito Variable', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
@@ -22,6 +30,164 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+.game-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  background: #0d1f10;
+  color: #fde68a;
+  font-size: 14px;
+}
+
+.game-hud {
+  padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)) !important;
+}
+
+.hud-menu-button {
+  color: var(--hud-accent);
+  background: rgba(0, 0, 0, 0.48);
+  border: 1px solid var(--hud-border);
+  border-radius: 5px;
+  padding: 2px 5px;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.hud-minimap-card { position: relative; }
+.hud-quick-menu {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  z-index: 50;
+  top: 34px;
+  right: 8px;
+  padding: 4px;
+  border: 1px solid var(--hud-border);
+  border-radius: 7px;
+  background: var(--hud-panel-strong);
+  box-shadow: var(--hud-shadow);
+  min-width: 118px;
+}
+.hud-quick-menu button {
+  border: 0;
+  border-radius: 4px;
+  padding: 5px 8px;
+  background: transparent;
+  color: #fde68a;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.hud-quick-menu button:active { background: rgba(180, 83, 9, 0.5); }
+.hud-connection-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #facc15; box-shadow: 0 0 7px currentColor; }
+.hud-connection-dot.connected { color: #4ade80; background: #4ade80; }
+.hud-connection-dot.reconnecting { color: #facc15; background: #facc15; animation: pulse 1s ease-in-out infinite; }
+.hud-connection-dot.offline { color: #f87171; background: #f87171; }
+.hud-debug-panel { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; padding: 5px 7px; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 6px; background: rgba(2, 6, 10, 0.9); color: #cbd5e1; font: 9px/1.3 'Nunito Variable', sans-serif; }
+.hud-debug-panel strong { color: #f8fafc; font-weight: 800; }
+
+.hud-bottom-row { display: flex; }
+.hud-bottom-row { position: absolute; inset: 0; pointer-events: none; align-items: flex-end; }
+.hud-chat-wrap {
+  position: absolute;
+  left: 50%;
+  top: auto;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  z-index: 42;
+  width: min(360px, calc(100vw - 24px));
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+.hud-chat-wrap .hud-chat-panel { width: 100%; max-width: 100% !important; }
+.hud-chat-wrap .hud-chat-body { width: 100% !important; }
+.hud-skill-wrap {
+  position: absolute;
+  right: max(10px, env(safe-area-inset-right));
+  bottom: max(10px, env(safe-area-inset-bottom));
+  width: max-content;
+  flex: none !important;
+}
+.hud-center-target {
+  position: absolute;
+  top: 58px;
+  left: 50%;
+  z-index: 10;
+  width: min(280px, 30vw);
+  transform: translateX(-50%);
+  pointer-events: none !important;
+}
+.hud-center-target .hud-target-card { width: 100%; min-width: 0; }
+.hud-info-stack { position: relative; z-index: 15; }
+.hud-virtual-controls { bottom: max(24px, env(safe-area-inset-bottom)) !important; }
+.hud-quest-details { display: flex; flex-direction: column; gap: 6px; }
+.hud-virtual-controls { display: flex !important; }
+.hud-direction-pad { grid-template-columns: repeat(3, 42px); grid-template-rows: repeat(3, 42px); gap: 3px; }
+.hud-direction-button { display: flex; align-items: center; justify-content: center; border: 1px solid rgba(251, 191, 36, .8); border-radius: 10px; color: #fde68a; background: linear-gradient(145deg, rgba(30, 41, 59, .95), rgba(2, 6, 23, .95)); box-shadow: 0 4px 12px rgba(0, 0, 0, .5); font-size: 17px; font-weight: 900; touch-action: none; }
+.hud-direction-button:active { background: #b45309; transform: scale(.94); }
+.hud-direction-up { grid-area: 1 / 2; }
+.hud-direction-left { grid-area: 2 / 1; }
+.hud-direction-right { grid-area: 2 / 3; }
+.hud-direction-down { grid-area: 3 / 2; }
+.hud-touch-action-controls { display: none !important; }
+
+@media (pointer: coarse) {
+  .hud-touch-action-controls { display: flex !important; }
+  .hud-skill-wrap { display: none !important; }
+}
+
+@media (max-width: 767px) {
+  .game-hud { padding: max(5px, env(safe-area-inset-top)) max(5px, env(safe-area-inset-right)) max(5px, env(safe-area-inset-bottom)) max(5px, env(safe-area-inset-left)) !important; }
+  .hud-virtual-controls { bottom: max(20px, env(safe-area-inset-bottom)) !important; padding-left: max(8px, env(safe-area-inset-left)) !important; padding-right: max(8px, env(safe-area-inset-right)) !important; }
+  .hud-chat-wrap { width: min(360px, calc(100vw - 20px)); }
+  .hud-center-target { top: 52px; width: min(230px, 31vw); }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .game-hud { padding: max(4px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)) !important; }
+  .hud-top-row { gap: 4px !important; }
+  .hud-player-status { gap: 5px !important; transform: scale(0.78); transform-origin: top left; }
+  .hud-player-avatar { width: 42px !important; height: 42px !important; font-size: 20px !important; border-radius: 8px !important; }
+  .hud-player-card { min-width: 0 !important; width: clamp(142px, 29vw, 190px); padding: 4px 6px !important; gap: 2px !important; border-width: 1px !important; }
+  .hud-player-card > div:first-child { padding-bottom: 2px !important; }
+  .hud-player-card span { line-height: 1.15; }
+  .hud-target-card { min-width: 0 !important; width: clamp(155px, 27vw, 210px); padding: 4px 6px !important; gap: 3px !important; border-width: 1px !important; }
+  .hud-info-stack { gap: 3px !important; }
+  .hud-minimap-card { min-width: 0 !important; padding: 4px 5px !important; gap: 3px !important; border-width: 1px !important; }
+  .hud-minimap-header { padding-bottom: 2px !important; }
+  .hud-minimap-radar { width: 92px !important; height: 58px !important; }
+  .hud-minimap-radar > div[style*="right: 0"] { height: 58px !important; }
+  .hud-minimap-radar > div[style*="height: 72px"] { height: 58px !important; }
+  .hud-quest { max-width: 145px !important; margin-top: 0 !important; }
+  .hud-quest > div { padding: 5px !important; border-radius: 8px !important; }
+  .hud-quest-details { gap: 3px; font-size: 9px; }
+  .hud-bottom-row { position: absolute; inset: 0; left: 0; bottom: 0; width: auto; }
+  .hud-chat-panel { opacity: 0.94; }
+  .hud-chat-header { padding: 2px 4px !important; gap: 1px !important; }
+  .hud-chat-header button { padding: 2px 4px !important; font-size: 8px !important; }
+  .hud-chat-body { width: 100% !important; padding: 4px !important; gap: 3px !important; background: var(--hud-panel) !important; }
+  .hud-chat-messages { height: 34px !important; }
+  .hud-chat-body input { min-width: 0; padding: 3px 5px !important; font-size: 9px !important; }
+  .hud-chat-body form button { padding: 3px 6px !important; }
+  .hud-virtual-controls { bottom: max(16px, env(safe-area-inset-bottom)) !important; }
+  .hud-direction-pad { grid-template-columns: repeat(3, 48px); grid-template-rows: repeat(3, 48px); gap: 2px; }
+  .hud-direction-button { border-radius: 7px; font-size: 13px; }
+  .hud-virtual-controls [aria-label^="Đánh kỹ năng"] { width: 48px !important; height: 48px !important; }
+  .hud-virtual-controls [aria-label^="Chọn kỹ năng"],
+  .hud-virtual-controls [aria-label="Nhặt vật phẩm gần đây"],
+  .hud-virtual-controls [aria-label^="Bật tự động"],
+  .hud-virtual-controls [aria-label^="Tắt tự động"],
+  .hud-virtual-controls [aria-label="Chọn đánh thường"] { width: 32px !important; height: 32px !important; }
+  .hud-virtual-controls [aria-label^="Chọn kỹ năng"] img { width: 24px !important; height: 24px !important; }
+}
+
+@media (pointer: coarse) {
+  .hud-chat-wrap {
+    bottom: calc(110px + env(safe-area-inset-bottom));
+    width: min(320px, calc(100vw - 200px));
+  }
 }
 
 /* Các lớp tiện ích Fantasy MMORPG UI lấy cảm hứng từ phong cách TeaMobi / Hiệp Sĩ Online */
@@ -67,11 +233,1002 @@ body {
   100% { opacity: 0; transform: translateY(-4px); }
 }
 
-/* Đảm bảo canvas của Phaser sắc nét pixel-art */
-canvas {
-  image-rendering: -moz-crisp-edges;
-  image-rendering: -webkit-crisp-edges;
+/* Phaser's source sprites are pixel art; avoid browser smoothing when the 16:9
+   game surface is scaled to a non-integer CSS size. */
+canvas { image-rendering: pixelated; }
+
+/* NRO's original menu language: pixel landscape, parchment panels, orange controls. */
+.nro-menu-backdrop { position: absolute; inset: 0; overflow: hidden; z-index: 0; background: #26aef2; image-rendering: pixelated; }
+.nro-menu-sky { position: absolute; inset: 0 0 22%; background: linear-gradient(#0b9eea 0 30%, #8ddaff 65%, #f5d383 100%); }
+.nro-menu-backdrop img { position: absolute; left: 0; width: 100%; object-fit: cover; image-rendering: pixelated; pointer-events: none; }
+.nro-menu-clouds { bottom: 37%; height: 48%; object-position: center bottom; opacity: .92; }
+.nro-menu-far { bottom: 30%; height: 47%; object-position: center bottom; }
+.nro-menu-rocks { bottom: 23%; height: 42%; object-position: center bottom; }
+.nro-menu-near { bottom: 14%; height: 37%; object-position: center bottom; }
+.nro-menu-water { bottom: 13%; height: 24%; object-position: center bottom; opacity: .9; }
+.nro-menu-ground { position: absolute; inset: auto 0 0; height: 25%; border-top: 8px solid #805126; background-color: #e9b65c; background-image: linear-gradient(135deg, rgba(116,72,31,.24) 25%, transparent 25%), linear-gradient(315deg, rgba(116,72,31,.2) 25%, transparent 25%); background-size: 18px 18px; box-shadow: inset 0 8px #8eb94d; }
+.nro-game-button { min-height: 40px; border: 3px solid #6c2a12; border-radius: 13px; color: #592b10; background: linear-gradient(#ffbd4b 0 18%, #f28624 20% 100%); box-shadow: inset 0 0 0 2px #ffd477, 0 2px #4d2a18; text-shadow: 0 1px #ffe5a4; cursor: pointer; transition: filter .1s, transform .1s; }
+.nro-game-button:hover { filter: brightness(1.08); }
+.nro-game-button:active { transform: translateY(2px); box-shadow: inset 0 0 0 2px #ffd477; }
+.nro-game-button.active { color: #16552b; background: linear-gradient(#8de87e 0 18%, #47bd5d 20% 100%); border-color: #34562c; }
+.nro-game-button-primary { min-width: 155px; font-size: 17px; }
+.nro-auth-screen { isolation: isolate; background: #2384b7; }
+.nro-auth-panel { z-index: 1; box-sizing: border-box; width: min(100%, 430px); max-width: min(calc(100vw - 24px), 430px) !important; border: 4px solid #79451e; border-radius: 14px; color: #633718; background: #ffebc5; box-shadow: inset 0 0 0 3px #fff8e6, 0 5px #49311e; }
+.nro-logo-mark { width: 44px; height: 44px; margin: -42px auto 4px; display: grid; place-items: center; border: 3px solid #773512; border-radius: 50%; color: #fff0bd; background: #e66d1b; box-shadow: inset 0 0 0 2px #ffc560; font: 900 30px/1 Georgia, serif; text-shadow: 2px 2px #743313; }
+.nro-game-logo { margin: 0; color: #df5e19; font: 1000 clamp(24px, 4vw, 34px)/1 Georgia, serif; letter-spacing: 1px; -webkit-text-stroke: 1px #793615; text-shadow: 2px 3px #ffcf77, 3px 4px #7a3c17; }
+.nro-game-logo span { display: block; margin-top: -1px; color: #379b43; font-size: .72em; -webkit-text-stroke: 1px #285e2d; text-shadow: 1px 2px #c5ec91; }
+.nro-auth-subtitle { margin: 13px 0 0; color: #7b5633; font-weight: 700; }
+.nro-auth-switch { border: 1px solid #a47a43; border-radius: 9px; background: #e6c48e; }
+.nro-auth-switch .nro-game-button { min-height: 34px; border-width: 2px; border-radius: 8px; }
+.nro-auth-note { border: 1px solid #c9a46e; border-radius: 7px; color: #73532e; background: #f6ddb0; }
+.nro-auth-error { border: 1px solid #a34b2a; border-radius: 7px; color: #7a2415; background: #f5c7a8; }
+.nro-auth-label { color: #6b3b1c; }
+.nro-auth-input { min-height: 48px; border: 2px solid #b28a50; border-radius: 9px; color: #5b3018; background: #f4d39b; box-shadow: inset 0 2px #dfb873; }
+.nro-auth-input::placeholder { color: #9b7645; }
+.nro-auth-input:focus { border-color: #df7b25; box-shadow: inset 0 2px #dfb873, 0 0 0 2px #f5af49; }
+.nro-auth-remember { color: #694522; }
+.nro-auth-remember p { color: #94724c; }
+.nro-character-screen { display: flex; align-items: stretch; overflow: hidden; isolation: isolate; }
+.nro-character-panel { position: relative; z-index: 1; width: 100%; min-height: 100%; color: #5c3418; }
+.nro-character-heading { position: absolute; top: 4%; left: 50%; width: min(470px, 90vw); transform: translateX(-50%); text-align: center; }
+.nro-server-label { display: block; color: #fff4d4; font: 900 clamp(16px, 2.2vw, 24px) Georgia, serif; text-shadow: 1px 2px 2px #573317; }
+.nro-character-heading h1 { margin: 3px 0 10px; color: #e5691a; font: 900 clamp(20px, 3vw, 30px) Georgia, serif; -webkit-text-stroke: .7px #7a3b16; text-shadow: 1px 2px #ffe0a5; }
+.nro-character-heading p { margin: 5px 0; color: #fff2ce; font-size: 12px; font-weight: 800; text-shadow: 1px 1px #573317; }
+.nro-name-field { display: block; padding: 3px; border: 2px solid #fff0c5; border-radius: 12px; background: #c59549; box-shadow: inset 0 2px #956a31; }
+.nro-name-field span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+.nro-name-field input { width: 100%; height: 43px; border: 0; border-radius: 8px; outline: 0; text-align: center; color: #fff4dc; background: #edc17f; font-size: 18px; font-weight: 900; }
+.nro-planet-grid { position: absolute; top: 27%; left: 50%; display: grid; grid-template-columns: repeat(3, minmax(120px, 170px)); gap: 16px; transform: translateX(-50%); }
+.nro-planet-choice { position: relative; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 8px; overflow: visible; border: 3px solid #693716; border-radius: 16px; color: #512b13; background: linear-gradient(#ffce70, #f08b27); box-shadow: inset 0 0 0 2px #ffe59f, 0 3px #4e2b18; cursor: pointer; }
+.nro-planet-choice:nth-child(2) { background: linear-gradient(#8fe9a1, #3fba64); }
+.nro-planet-choice.selected { outline: 3px solid #fff3c4; filter: brightness(1.08); }
+.nro-planet-caption { font: 900 18px/1.15 'Nunito Variable', system-ui, sans-serif; text-shadow: 0 1px #ffe4ad; }
+.nro-planet-name { margin-top: 2px; font-weight: 900; }
+.nro-planet-detail { color: #654221; font-size: 9px; font-weight: 700; }
+.nro-pixel-warrior { position: absolute; bottom: 100%; left: 50%; width: 30px; height: 54px; transform: translateX(-50%); image-rendering: pixelated; filter: drop-shadow(0 4px 0 rgba(43,35,19,.55)); }
+.nro-pixel-warrior::before { content: ''; position: absolute; top: 2px; left: 8px; width: 15px; height: 14px; border: 2px solid #392219; background: #f2bd88; box-shadow: -4px 4px #222, 2px 4px #222; }
+.nro-pixel-warrior::after { content: ''; position: absolute; top: 18px; left: 5px; width: 22px; height: 22px; border: 2px solid #402517; background: #227bc2; box-shadow: 0 20px #3d2620, 5px 20px #3d2620; }
+.nro-pixel-warrior.namek::after { background: #39a554; }
+.nro-pixel-warrior.saiyan::after { background: #bc4b37; }
+.nro-pixel-warrior i,.nro-pixel-warrior b,.nro-pixel-warrior em { position: absolute; z-index: 1; top: 7px; left: 6px; width: 8px; height: 8px; background: #262016; }
+.nro-pixel-warrior b { left: 18px; }
+.nro-pixel-warrior em { top: -4px; left: 8px; width: 13px; height: 7px; background: #171c28; box-shadow: -4px 4px #171c28, 8px 2px #171c28; }
+.nro-source-warrior { position: absolute; z-index: 1; bottom: calc(100% + 4px); left: 50%; width: 34px; height: 58px; transform: translateX(-50%); image-rendering: pixelated; background-size: 100% 100%; background-position: center; background-repeat: no-repeat; filter: drop-shadow(0 3px 0 #31220f88); }
+.nro-character-preview { bottom: 20%; left: 19%; width: 44px; height: 78px; transform: translateX(-50%) scale(1.45); transform-origin: bottom center; }
+.nro-source-warrior-inventory { position: relative; inset: auto; flex: 0 0 42px; width: 42px; height: 64px; transform: none; filter: none; }
+.nro-source-warrior-hud { position: relative; inset: auto; top: -5px; flex: 0 0 42px; width: 42px; height: 44px; transform: none; filter: drop-shadow(0 2px 0 #120d08); }
+.nro-inventory-identity { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.nro-character-actions { position: absolute; right: 3%; bottom: 2%; left: 3%; display: flex; justify-content: space-between; }
+.nro-character-actions .nro-game-button { width: min(190px, 42vw); min-height: 50px; }
+.nro-character-error { position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%); padding: 7px 12px; border: 2px solid #7f301b; border-radius: 8px; color: #702516; background: #ffd6af; }
+.nro-inventory-panel { width: min(620px, calc(100vw - 24px)); padding: 10px; border: 3px solid #6f4324; border-radius: 9px; color: #563618; background: #ded0b4; box-shadow: inset 0 0 0 2px #f8ebcc, 0 4px #3c2818; }
+.nro-inventory-header { padding: 2px 4px 8px; }
+.nro-inventory-header h2 { margin: 0; color: #7c441d; font: 900 20px Georgia, serif; }
+.nro-inventory-player { margin: 0 0 3px; color: #86633d; font-size: 10px; font-weight: 800; }
+.nro-inventory-close { width: 28px; height: 28px; border: 2px solid #6f3518; border-radius: 5px; color: #fff4d4; background: #dd6427; font-size: 22px; line-height: 20px; }
+.nro-inventory-tabs { display: flex; gap: 3px; overflow-x: auto; border-bottom: 2px solid #957145; }
+.nro-inventory-tabs button { flex: 1 0 auto; min-height: 34px; padding: 3px 7px; border: 2px solid #81542c; border-radius: 7px 7px 0 0; color: #603b1e; background: #c8b38e; font-size: 11px; font-weight: 900; }
+.nro-inventory-tabs button.active { color: #155c32; background: #75ce7a; border-bottom-color: #75ce7a; }
+.nro-inventory-stats { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 3px 8px; padding: 7px 4px; color: #795123; font-size: 10px; }
+.nro-inventory-stats b { color: #2671a2; }
+.nro-equipment-grid { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 4px; padding: 5px 0; }
+.nro-equipment-grid > div { border: 1px solid #aa8959 !important; border-radius: 4px !important; color: #68431f; background: #eee3ce !important; }
+.nro-equipment-grid .text-slate-400 { color: #846943; }
+.nro-equipment-grid .text-amber-100 { color: #66401e; }
+.nro-bag-capacity { padding: 3px 5px; color: #856339; font-size: 10px; text-align: right; }
+.nro-inventory-content { max-height: min(45dvh, 360px); overflow: auto; border: 1px solid #b39b71; border-radius: 4px; background: #eee5d6; }
+.nro-item-list { display: flex; flex-direction: column; gap: 2px; padding: 3px; }
+.nro-item-row { min-height: 46px; padding: 4px 6px; border: 1px solid #c5b292; color: #58442e; background: #e8dece; cursor: pointer; }
+.nro-item-row.selected { border-color: #cf9c14; background: #fff15b; }
+.nro-item-row p { color: #5d8dba !important; }
+.nro-item-row p:first-child { color: #286041 !important; }
+.nro-item-row button { min-height: 28px; color: #fff4d7; background: #d97722; }
+.nro-known-skills { display: grid; gap: 3px; padding: 5px; }
+.nro-known-skill-row { display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 4px 7px; border: 1px solid #b9a47e; background: #ede3d1; font-size: 11px; }
+.nro-known-skill-row img { width: 30px; height: 30px; object-fit: contain; image-rendering: pixelated; }
+.nro-known-skill-row span { flex: 1; color: #5d3d21; font-weight: 800; }
+.nro-known-skill-row b { color: #367cad; }
+.nro-feature-unavailable { padding: 30px 8px; color: #765a34; text-align: center; }
+.nro-inventory-functions { display: flex; flex-direction: column; gap: 7px; padding: 12px 4px; }
+.nro-inventory-functions button { min-height: 42px; border: 2px solid #754723; border-radius: 7px; color: #fff4db; background: #cd6c23; font-weight: 900; }
+.nro-death-notice { position: absolute; z-index: 30; top: 50%; left: 50%; display: flex; min-width: 210px; flex-direction: column; gap: 3px; padding: 9px 14px; transform: translate(-50%, -50%); border: 2px solid #6f3518; border-radius: 6px; color: #fff1ce; background: #24180fe8; box-shadow: inset 0 0 0 1px #e69a3d, 0 3px #24180f; font-size: 12px; text-align: center; text-shadow: 1px 1px #21140a; pointer-events: none; }
+.nro-death-notice strong { color: #ffbf63; font-size: 15px; }
+.nro-mini-avatar { position: relative; display: block; width: 36px; height: 48px; image-rendering: pixelated; }
+.nro-mini-avatar::before { content: ''; position: absolute; top: 2px; left: 10px; width: 16px; height: 15px; border: 2px solid #3d2a19; background: #efbd8b; box-shadow: -4px -3px #211c1b, 4px -2px #211c1b; }
+.nro-mini-avatar::after { content: ''; position: absolute; top: 19px; left: 6px; width: 25px; height: 17px; border: 2px solid #3d2a19; background: #2181c9; box-shadow: 2px 18px #35251c, 12px 18px #35251c; }
+.nro-mini-avatar.namek::after { background: #42a85d; }
+.nro-mini-avatar.saiyan::after { background: #b54c34; }
+.nro-mini-avatar.cat::before { border-radius: 5px 5px 0 0; background: #e7aa44; clip-path: polygon(0 25%, 20% 0, 36% 22%, 65% 22%, 82% 0, 100% 25%, 100% 100%, 0 100%); }
+.nro-mini-avatar.cat::after { background: #b67836; border-radius: 7px 7px 2px 2px; }
+.nro-mini-avatar i,.nro-mini-avatar b,.nro-mini-avatar em { position: absolute; z-index: 1; top: 9px; left: 12px; width: 3px; height: 3px; background: #292016; }
+.nro-mini-avatar b { left: 22px; }
+.nro-mini-avatar em { display: none; }
+.nro-stat-glyph { position: relative; display: inline-block; width: 11px; height: 11px; vertical-align: -1px; }
+.nro-stat-glyph.hp { width: 9px; height: 9px; transform: rotate(45deg); background: #dc4e4e; }
+.nro-stat-glyph.hp::before,.nro-stat-glyph.hp::after { content: ''; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #dc4e4e; }
+.nro-stat-glyph.hp::before { top: -4px; }.nro-stat-glyph.hp::after { left: -4px; }
+.nro-stat-glyph.ki { width: 8px; height: 11px; border-radius: 55% 45% 55% 45%; transform: rotate(45deg); background: #57a8e8; }
+.nro-stat-glyph.coin { width: 11px; height: 11px; border: 2px solid #81521c; border-radius: 50%; background: #ffc44d; box-shadow: inset 0 0 0 1px #ffe390; }
+.nro-stat-glyph.potential { width: 12px; height: 12px; background: #ebcb57; clip-path: polygon(50% 0, 62% 35%, 100% 40%, 69% 62%, 80% 100%, 50% 77%, 20% 100%, 31% 62%, 0 40%, 38% 35%); }
+.nro-stat-glyph.power { width: 9px; height: 13px; background: #6ed2ff; clip-path: polygon(57% 0, 10% 57%, 42% 57%, 30% 100%, 91% 38%, 58% 38%); }
+.nro-map-pin { display: inline-block; width: 9px; height: 12px; margin-right: 2px; border: 2px solid #ef6251; border-radius: 8px 8px 8px 0; transform: rotate(-45deg); vertical-align: -2px; }
+.nro-clock-glyph { position: relative; display: inline-block; width: 11px; height: 11px; border: 1.5px solid #e9b84e; border-radius: 50%; vertical-align: -2px; }
+.nro-clock-glyph::before,.nro-clock-glyph::after { content: ''; position: absolute; left: 4px; width: 1px; background: #ffe39a; transform-origin: bottom; }
+.nro-clock-glyph::before { top: 1px; height: 4px; }.nro-clock-glyph::after { top: 4px; height: 3px; transform: rotate(55deg); }
+.nro-flag-glyph { position: relative; display: inline-block; width: 12px; height: 14px; margin-right: 4px; border-left: 2px solid #d8b36e; vertical-align: -3px; }
+.nro-flag-glyph::before { content: ''; position: absolute; top: 1px; left: 1px; width: 9px; height: 7px; background: #de6531; clip-path: polygon(0 0,100% 0,72% 48%,100% 100%,0 100%); box-shadow: inset 0 0 0 1px #7d321b; }
+.nro-bell-glyph { position: relative; display: inline-block; width: 12px; height: 13px; margin-right: 2px; border: 1px solid #76501e; border-radius: 7px 7px 3px 3px; background: #e9b94f; box-shadow: inset 0 0 0 2px #ffe39a; }
+.nro-bell-glyph::before { content: ''; position: absolute; left: -2px; bottom: 1px; width: 12px; height: 2px; background: #875c20; }.nro-bell-glyph::after { content: ''; position: absolute; left: 4px; bottom: -3px; width: 3px; height: 3px; border-radius: 50%; background: #e4a539; }
+.nro-scroll-glyph { position: relative; display: inline-block; width: 10px; height: 13px; border: 1px solid #76501e; border-radius: 2px; background: #e7cc91; box-shadow: inset 2px 0 #bb8a43; }
+.nro-scroll-glyph::before,.nro-scroll-glyph::after { content: ''; position: absolute; left: 3px; width: 5px; height: 1px; background: #8c6330; }.nro-scroll-glyph::before { top: 4px; box-shadow: 0 3px #8c6330; }.nro-scroll-glyph::after { top: 10px; }
+.nro-combat-glyph { position: relative; display: inline-block; width: 10px; height: 10px; flex: 0 0 10px; }
+.nro-combat-glyph.attack::before,.nro-combat-glyph.attack::after { content: ''; position: absolute; left: 4px; top: 0; width: 2px; height: 10px; border: 1px solid #7b3b1a; background: #ffd483; transform: rotate(42deg); }.nro-combat-glyph.attack::after { transform: rotate(-42deg); background: #e9983c; }
+.nro-combat-glyph.defense { background: #78b9dc; clip-path: polygon(50% 0,95% 16%,86% 66%,50% 100%,14% 66%,5% 16%); filter: drop-shadow(0 0 1px #183a4d); }
+.nro-target-glyph { position: relative; display: inline-block; width: 16px; height: 15px; flex: 0 0 16px; }
+.nro-target-glyph.mob::before { content: ''; position: absolute; left: 3px; top: 4px; width: 10px; height: 10px; border: 1px solid #563719; border-radius: 50%; background: #d9bd83; box-shadow: -2px -3px 0 -1px #d9bd83, 2px -3px 0 -1px #d9bd83; }
+.nro-target-glyph.mob::after { content: ''; position: absolute; left: 5px; top: 8px; width: 2px; height: 2px; background: #382518; box-shadow: 4px 0 #382518; }
+.nro-target-glyph.elite { background: #f87171; clip-path: polygon(50% 0,63% 31%,98% 35%,72% 58%,80% 96%,50% 77%,20% 96%,28% 58%,2% 35%,37% 31%); filter: drop-shadow(0 0 1px #641d1d); }
+.nro-target-glyph.boss::before { content: ''; position: absolute; left: 2px; top: 1px; width: 12px; height: 11px; border: 1px solid #4b286d; border-radius: 5px 5px 3px 3px; background: #bb8ad8; box-shadow: inset 0 -3px #744295; }
+.nro-target-glyph.boss::after { content: ''; position: absolute; left: 5px; top: 5px; width: 2px; height: 2px; background: #281438; box-shadow: 4px 0 #281438; }
+.hud-icon-button { display: inline-grid; width: 27px; height: 27px; place-items: center; border: 2px solid #7b4b21; border-radius: 5px; background: #e18a35; box-shadow: inset 0 0 0 1px #ffcf74; }
+.nro-bag-glyph { position: relative; width: 14px; height: 12px; border: 2px solid #583719; border-radius: 2px 2px 4px 4px; background: #e7c17c; }
+.nro-bag-glyph::before { content: ''; position: absolute; left: 2px; top: -6px; width: 6px; height: 5px; border: 2px solid #583719; border-bottom: 0; border-radius: 5px 5px 0 0; }
+.nro-training-glyph { width: 3px; height: 15px; background: #fff0a6; box-shadow: 0 0 2px #6b3e16; transform: rotate(35deg); }
+.nro-training-glyph::before,.nro-training-glyph::after { content: ''; position: absolute; width: 7px; height: 4px; left: -2px; border: 1px solid #70441b; background: #f7b647; }
+.nro-training-glyph::before { top: 1px; }.nro-training-glyph::after { bottom: 1px; }
+.nro-attack-symbol { position: relative; display: block; width: 20px; height: 21px; }
+.nro-attack-symbol::before,.nro-attack-symbol::after { content: ''; position: absolute; top: 2px; left: 8px; width: 4px; height: 18px; border: 1px solid #51220f; background: #ffe5a1; transform: rotate(42deg); }
+.nro-attack-symbol::after { transform: rotate(-42deg); background: #e7a33b; }
+.nro-chat-glyph { position: relative; display: inline-block; width: 12px; height: 9px; margin: 0 4px; border: 1px solid #5a391b; border-radius: 4px; background: #f8e2b1; }
+.nro-chat-glyph::after { content: ''; position: absolute; bottom: -3px; left: 2px; width: 4px; height: 4px; background: #f8e2b1; border-left: 1px solid #5a391b; transform: skew(-25deg); }
+
+/* Menu screens use the source game's flat sky and layered pixel scenery. */
+.nro-menu-sky { background: #14a9ee; }
+.nro-menu-backdrop img { object-fit: fill; image-rendering: pixelated; }
+.nro-menu-clouds { opacity: 1; }
+.nro-menu-ground {
+  height: 20%;
+  border-top: 4px solid #71502b;
+  background-color: #14562d;
+  background-image: url('/assets/nro/ui/grass-ground-tile.svg'), repeating-linear-gradient(0deg, transparent 0 14px, #0e4b2a 14px 16px), repeating-linear-gradient(90deg, transparent 0 22px, #1d6334 22px 24px);
+  background-repeat: repeat-x, repeat, repeat;
+  background-position: left top, left top, left top;
+  background-size: 24px 10px, 96px 32px, 72px 32px;
+  box-shadow: inset 0 3px #7ebd48;
+}
+
+/* Keep item labels and values readable on the original beige inventory rows. */
+.nro-item-row .text-amber-100 { color: #286041 !important; }
+.nro-item-row .text-emerald-300 { color: #116c49 !important; }
+.nro-item-row .text-slate-400 { color: #356f9b !important; }
+.nro-inventory-panel, .nro-inventory-panel button { font-family: 'Nunito Variable', system-ui, sans-serif; }
+
+/* The reference keeps the world unobstructed behind the inventory list. */
+.nro-app-shell { background: #071016; }
+.nro-inventory-overlay { background: rgba(14, 17, 12, .26); }
+.nro-scene-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  color: #fff0bc;
+  background: #69c5ee;
+  font: 900 clamp(14px, 2vw, 22px)/1.2 Georgia, serif;
+  text-shadow: 2px 2px #54371e, -1px -1px #54371e;
+  pointer-events: none;
+}
+
+@media (max-width: 700px) {
+  .nro-auth-panel { max-width: min(calc(100vw - 20px), 380px) !important; padding: 16px !important; }
+  .nro-game-logo { font-size: 25px; }
+  .nro-character-heading { top: 5%; width: 92vw; }
+  .nro-name-field input { height: 38px; }
+  .nro-planet-grid { top: 31%; width: 92vw; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; }
+  .nro-planet-choice { min-height: 98px; padding: 5px 2px; border-radius: 10px; }
+  .nro-planet-caption { font-size: clamp(12px, 3.4vw, 17px); }
+  .nro-planet-name { font-size: 11px; }
+  .nro-planet-detail { font-size: 8px; }
+  .nro-pixel-warrior { transform: translateX(-50%) scale(.82); transform-origin: bottom; }
+  .nro-character-preview { bottom: 20%; left: 50%; transform: translateX(-50%) scale(1.15); }
+  .nro-character-actions { bottom: max(12px, env(safe-area-inset-bottom)); }
+  .nro-character-actions .nro-game-button { min-height: 46px; }
+  .nro-inventory-panel { max-height: calc(100dvh - 20px); padding: 7px; }
+  .nro-inventory-tabs button { min-height: 38px; padding-inline: 8px; }
+  .nro-inventory-content { max-height: 45dvh; }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .nro-auth-screen { align-items: flex-start; padding: 6px; }
+  .nro-auth-panel { width: min(430px, calc(100vw - 20px)); margin-block: 0; padding: 10px !important; }
+  .nro-auth-panel header { margin-bottom: 8px; }
+  .nro-logo-mark { display: none; }
+  .nro-game-logo { font-size: 22px; }
+  .nro-auth-subtitle { margin-top: 4px; font-size: 12px; }
+  .nro-auth-switch { margin-bottom: 8px; }
+  .nro-auth-note { display: none; }
+  .nro-auth-panel form { gap: 7px; }
+  .nro-auth-input { min-height: 38px; padding-block: 7px; }
+  .nro-auth-panel form > button { min-height: 38px; padding-block: 6px; }
+}
+@media (orientation: portrait) and (max-width: 767px) {
+  .game-hud::after { content: 'Xoay ngang thiết bị để chơi thuận tiện hơn'; position: fixed; inset: 0; z-index: 999; display: grid; place-items: center; padding: 24px; color: #fff1cc; background: rgba(68, 43, 22, .94); border: 8px solid #d29342; font: 900 18px/1.4 Georgia, serif; text-align: center; text-shadow: 1px 2px #4d2e16; pointer-events: none; }
+}
+
+/* NRO viewport: keep the game world at the reference's 16:9 ratio. */
+#root { width: 100%; height: 100dvh; }
+.nro-app-shell {
+  width: 100vw;
+  height: 100dvh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: radial-gradient(ellipse at center, #172220 0%, #050b13 76%);
+}
+.nro-game-frame {
+  position: relative;
+  width: min(100vw, 1440px, calc(100dvh * 16 / 9));
+  height: min(100dvh, 810px, calc(100vw * 9 / 16));
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 3px solid #a34f16;
+  outline: 1px solid #f1a43b;
+  border-radius: 8px;
+  background: #58ad58;
+  box-shadow: 0 0 0 2px #4b2917, 0 0 38px #000b;
+}
+.nro-game-frame #game-container,
+.nro-game-frame .game-hud { width: 100%; height: 100%; }
+
+/* Login stays parchment colored and centered over the original layered NRO landscape. */
+.nro-auth-screen { padding: clamp(10px, 3vw, 32px) !important; }
+.nro-auth-layout { position: relative; z-index: 2; display: flex; width: min(460px, calc(100vw - 28px)); max-height: 100%; flex-direction: column; align-items: center; justify-content: center; gap: 12px; margin: auto; }
+.nro-auth-brand { width: 100%; flex: 0 0 auto; }
+.nro-auth-brand .nro-auth-subtitle { margin: 6px 0 0; color: #fff1c4; text-shadow: 1px 2px #583719; }
+.nro-menu-backdrop .nro-menu-sky { z-index: 0; }
+.nro-menu-backdrop img { display: block; z-index: 1; }
+.nro-menu-backdrop .nro-menu-ground { z-index: 2; }
+.nro-menu-backdrop .nro-menu-ground--desert {
+  height: 20%;
+  border-top-color: #6b4520;
+  background-color: #bd8847;
+  background-image: repeating-linear-gradient(90deg, transparent 0 20px, #8e6135 20px 24px), repeating-linear-gradient(0deg, transparent 0 12px, #d1a25e 12px 16px);
+  background-size: 48px 32px;
+  box-shadow: inset 0 5px #e3bd72;
+}
+.nro-menu-layer {
+  position: absolute;
+  z-index: 1;
+  inset-inline: 0;
+  background-repeat: repeat-x;
+  background-position: center bottom;
+  background-size: auto 50%;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+.nro-menu-backdrop .nro-menu-clouds { background-size: auto 50%; }
+.nro-menu-backdrop .nro-menu-far { z-index: 1; }
+.nro-menu-backdrop .nro-menu-rocks { z-index: 1; }
+.nro-menu-backdrop .nro-menu-near { z-index: 1; }
+.nro-menu-backdrop .nro-menu-water { z-index: 1; }
+.nro-menu-backdrop .nro-menu-ground { z-index: 2; }
+.nro-auth-panel {
+  width: 100%;
+  max-width: none !important;
+  padding: clamp(18px, 3vw, 30px) !important;
+  border-radius: 11px;
+  box-shadow: inset 0 0 0 3px #fff8e6, 0 4px 0 #49311e, 0 10px 28px #241709a8;
+}
+.nro-auth-panel header { margin-bottom: 0; }
+.nro-game-logo { font-size: clamp(25px, 2.5vw, 36px); white-space: nowrap; }
+.nro-auth-panel form { gap: 12px; }
+
+/* The inventory follows the original side-panel composition, leaving the world visible. */
+.nro-inventory-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  background: linear-gradient(90deg, #1a160cc9 0, #1a160c88 24%, #1a160c00 54%);
+}
+.nro-inventory-panel {
+  box-sizing: border-box;
+  width: clamp(250px, 25vw, 330px);
+  max-width: min(330px, 88vw) !important;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 7px;
+  border-width: 2px;
+  border-radius: 0 8px 8px 0;
+  box-shadow: inset 0 0 0 2px #f8ebcc, 3px 0 10px #241709a8;
+}
+.nro-inventory-header { flex: 0 0 auto; padding: 3px 4px 7px; }
+.nro-inventory-header h2 { font-size: 18px; }
+.nro-inventory-stats { display: grid; grid-template-columns: 1fr; gap: 1px; flex: 0 0 auto; padding: 3px 5px 6px; border-bottom: 1px solid #b39b71; color: #594126; font-size: 10px; line-height: 1.25; }
+.nro-inventory-stats b { color: #167ac1; font-weight: 900; }
+.nro-inventory-tabs { flex: 0 0 auto; }
+.nro-inventory-tabs button { min-width: 0; padding-inline: 4px; font-size: 10px; }
+.nro-inventory-content { flex: 1 1 auto; min-height: 100px; max-height: none; }
+.nro-item-row { min-height: 48px; }
+.nro-item-row img { image-rendering: pixelated; }
+.nro-inventory-functions,
+.nro-feature-unavailable,
+.nro-known-skills,
+.nro-equipment-grid { overflow: auto; }
+
+@media (max-width: 700px) {
+  .nro-auth-layout { width: min(440px, calc(100vw - 20px)); gap: 8px; }
+  .nro-app-shell { background: #050b13; }
+  .nro-game-frame { width: min(100vw, calc(100dvh * 16 / 9)); height: min(100dvh, calc(100vw * 9 / 16)); border-width: 2px; border-radius: 3px; }
+  .nro-auth-panel { width: min(440px, calc(100vw - 20px)); }
+  .nro-inventory-panel { width: min(290px, 78vw); max-width: 78vw !important; }
+  .nro-inventory-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); overflow: visible; }
+  .nro-inventory-tabs button { min-height: 40px; padding: 2px; white-space: normal; font-size: 8px; line-height: 1.1; }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .nro-auth-screen { align-items: flex-start !important; justify-content: center; overflow-y: auto; padding: 7px !important; }
+  .nro-auth-layout { width: min(430px, calc(100vw - 20px)); gap: 2px; }
+  .nro-auth-layout { max-height: none; flex-shrink: 0; justify-content: flex-start; margin-block: 0; }
+  .nro-auth-brand .nro-auth-subtitle { display: none; }
+  .nro-auth-brand .nro-game-logo { font-size: 21px; }
+  .nro-auth-panel { padding: 9px !important; }
+  .nro-auth-switch { margin-bottom: 6px; }
+  .nro-auth-switch .nro-game-button { min-height: 30px; padding-block: 3px; }
+  .nro-auth-panel form { gap: 5px; }
+  .nro-auth-input { min-height: 34px; padding-block: 5px; }
+  .nro-auth-remember { font-size: 10px; }
+  .nro-auth-remember p { display: none; }
+  .nro-auth-panel form > button { min-height: 36px; padding-block: 4px; }
+  .nro-inventory-panel { width: clamp(220px, 29vw, 285px); }
+  .nro-inventory-content { min-height: 0; }
+  .nro-inventory-stats { padding-block: 4px; }
+  .nro-inventory-header { padding-bottom: 4px; }
+  .nro-inventory-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); overflow: visible; }
+  .nro-inventory-tabs button { min-height: 38px; min-width: 0; padding: 2px; white-space: normal; font-size: 8px; line-height: 1.1; }
+  .nro-character-heading { top: 2%; width: min(460px, 72vw); }
+  .nro-server-label { font-size: 15px; }
+  .nro-character-heading h1 { margin: 0 0 4px; font-size: 18px; }
+  .nro-character-heading p { display: none; }
+  .nro-name-field input { height: 34px; font-size: 15px; }
+  .nro-planet-grid { top: 33%; grid-template-columns: repeat(3, minmax(105px, 150px)); gap: 10px; }
+  .nro-planet-choice { min-height: 86px; padding: 5px 3px; }
+  .nro-planet-caption { font-size: 15px; }
+  .nro-planet-name { font-size: 12px; }
+  .nro-planet-detail { font-size: 8px; }
+  .nro-character-preview { bottom: 20%; left: 31%; transform: translateX(-50%) scale(1.1); transform-origin: bottom center; }
+  .nro-character-actions { bottom: max(7px, env(safe-area-inset-bottom)); }
+  .nro-character-actions .nro-game-button { min-height: 42px; }
+  .nro-death-notice { top: 36%; }
+}
+
+/* Inventory palette and proportions follow the source game's narrow left panel. */
+.nro-inventory-overlay {
+  background: transparent;
+}
+.nro-inventory-panel {
+  width: clamp(250px, 26vw, 340px);
+  max-width: min(340px, 88vw) !important;
+  height: 100%;
+  max-height: 100%;
+  padding: 5px;
+  border: 2px solid #79522b;
+  border-left: 0;
+  border-radius: 0 8px 8px 0;
+  background: #cbb997;
+  box-shadow: inset 0 0 0 2px #f2dfbd, 3px 0 8px #291b10a8;
+}
+.nro-inventory-header {
+  min-height: 54px;
+  padding: 3px 5px 5px;
+  border-bottom: 1px solid #a88d63;
+}
+.nro-inventory-header h2 {
+  color: #713d1a;
+  font-size: 17px;
+}
+.nro-inventory-player {
+  color: #75512e;
+  font-size: 10px;
+}
+.nro-inventory-stats {
+  grid-template-columns: 1fr;
+  gap: 2px;
+  padding: 5px 6px;
+  color: #6d4b29;
+  font-size: 10px;
+}
+.nro-inventory-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 2px;
+  overflow: visible;
+  border-bottom: 2px solid #9b784b;
+}
+.nro-inventory-tabs button {
+  min-width: 0;
+  min-height: 36px;
+  padding: 2px;
+  white-space: normal;
+  color: #5e3d20;
+  background: #d4c09d;
+  font-size: 9px;
+  line-height: 1.05;
+}
+.nro-inventory-tabs button.active {
+  color: #14572c;
+  background: #83d789;
+}
+.nro-inventory-content {
+  min-height: 0;
+  flex: 1 1 auto;
+  max-height: none;
+  border-color: #b5a17e;
+  background: #eee6d9;
+}
+.nro-item-row {
+  min-height: 48px;
+  padding: 3px 5px;
+  border-color: #c9b99e;
+  background: #e9e0d2;
+}
+.nro-item-row img,
+.nro-equipment-grid img,
+.nro-known-skill-row img {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+.nro-item-row:focus-visible,
+.nro-inventory-tabs button:focus-visible,
+.nro-inventory-close:focus-visible {
+  outline: 2px solid #e79119;
+  outline-offset: 1px;
+}
+
+.nro-item-row { outline-offset: -2px; }
+
+/* Classic NRO vendor window keeps its two-column, parchment game UI. */
+
+/* The character sheet overlays the world; camera and HUD layout stay fixed. */
+.nro-inventory-overlay {
+  position: absolute;
+  z-index: 85;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  pointer-events: none;
+  background: transparent;
+}
+.nro-inventory-panel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: var(--nro-panel-width);
+  max-width: none !important;
+  min-width: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  padding: 4px;
+  border: 2px solid #70431f;
+  border-left: 0;
+  border-radius: 0 6px 6px 0;
+  color: #583717;
+  background: #c8b28e;
+  box-shadow: inset 0 0 0 2px #f4e5c7, 3px 0 8px #261609a8;
+  font-size: clamp(9px, .78vw, 12px);
+  pointer-events: auto;
+}
+.nro-inventory-header {
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  gap: 5px;
+  min-height: 54px;
+  padding: 2px 4px 5px;
+  border-bottom: 1px solid #a68a5e;
+}
+.nro-source-warrior-inventory { flex: 0 0 46px; width: 46px; height: 52px; }
+.nro-inventory-header-main { flex: 1; min-width: 0; }
+.nro-inventory-identity-line { display: flex; align-items: flex-start; gap: 3px; }
+.nro-inventory-player { display: flex; flex: 1; min-width: 0; align-items: center; gap: 4px; margin: 0; }
+.nro-inventory-player strong { overflow: hidden; color: #743c16; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.nro-inventory-player span { overflow: hidden; color: #77502a; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.nro-inventory-close {
+  flex: 0 0 19px;
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  border: 1px solid #692716;
+  border-radius: 2px;
+  color: white;
+  background: #d74426;
+  font: 900 17px/16px Arial, sans-serif;
+}
+.nro-inventory-bars { display: grid; gap: 2px; margin-top: 3px; }
+.nro-inventory-bars label { display: grid; grid-template-columns: 23px 1fr; align-items: center; gap: 3px; color: #633b1d; font-size: 8px; font-weight: 900; }
+.nro-inventory-bars label span { grid-column: 2; grid-row: 1; justify-self: end; color: #3e311f; font-size: 8px; }
+.nro-inventory-bars label i { grid-column: 1 / -1; height: 7px; overflow: hidden; border: 1px solid #5a351b; border-radius: 5px; background: #3a2114; box-shadow: inset 0 1px 2px #1f130c; }
+.nro-inventory-bars label:first-child i b { background: linear-gradient(#ff8b7e, #db2826); }
+.nro-inventory-bars label:last-child i b { background: linear-gradient(#79e9fa, #1682cb); }
+.nro-inventory-bars label i b { display: block; height: 100%; border-radius: inherit; }
+.nro-inventory-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 5px;
+  flex: 0 0 auto;
+  padding: 4px 5px;
+  border-bottom: 1px solid #ac9167;
+  color: #67431f;
+  font-size: 8px;
+}
+.nro-inventory-stats span { display: flex; justify-content: space-between; gap: 3px; min-width: 0; }
+.nro-inventory-stats span:last-child { grid-column: 1 / -1; }
+.nro-inventory-stats b { overflow: hidden; color: #126da7; text-overflow: ellipsis; white-space: nowrap; }
+.nro-inventory-tabs {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-bottom: 2px solid #88663b;
+}
+.nro-inventory-tabs button {
+  min-width: 0;
+  min-height: clamp(31px, 5.1vh, 43px);
+  padding: 2px 1px;
+  border: 1px solid #83613a;
+  border-radius: 3px 3px 0 0;
+  color: #533718;
+  background: #e6d6b7;
+  font-size: clamp(7px, .66vw, 10px);
+  font-weight: 900;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+.nro-inventory-tabs button.active { border-color: #28703b; color: #174f2c; background: #78d18a; }
+.nro-inventory-content {
+  min-height: 0;
+  flex: 1 1 auto;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid #a98e65;
+  border-top: 0;
+  border-radius: 0 0 3px 3px;
+  background: #eee7de;
+  scrollbar-color: #9f8050 #ded1ba;
+  scrollbar-width: thin;
+}
+.nro-item-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 45px;
+  padding: 2px 3px;
+  border-bottom: 1px solid #c0ae91;
+  background: #f0e9df;
+}
+.nro-item-row.selected, .nro-equipment-row.selected, .nro-known-skill-row.selected { background: #fff44e; }
+.nro-item-row img, .nro-equipment-row img, .nro-known-skill-row img { flex: 0 0 36px; width: 36px; height: 36px; object-fit: contain; image-rendering: pixelated; }
+.nro-item-copy, .nro-equipment-copy, .nro-known-skill-copy { min-width: 0; flex: 1; }
+.nro-item-copy p { margin: 0; color: #175c29; font-size: 9px; font-weight: 900; line-height: 1.1; }
+.nro-item-copy small, .nro-equipment-bonus { display: block; overflow: hidden; color: #1472bb; font-size: 8px; line-height: 1.15; text-overflow: ellipsis; }
+.nro-item-row > button { flex: 0 0 auto; padding: 2px 4px; border: 1px solid #754b22; border-radius: 3px; color: #fff4d2; background: #bb5a1c; font-size: 8px; font-weight: 900; }
+.nro-item-icon-wrap { position: relative; display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; }
+.nro-item-quantity { position: absolute; right: -3px; bottom: -2px; max-width: 52px; padding: 1px 3px; overflow: hidden; border: 1px solid #fff0b9; border-radius: 8px; color: #fff8d9; background: #72421c; font-size: 8px; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
+.nro-item-detail { margin: 4px; padding: 7px; border: 1px solid #ad8b5b; border-radius: 3px; color: #573a20; background: #f8efdf; }
+.nro-item-detail-heading { display: flex; align-items: center; gap: 7px; }
+.nro-item-detail-heading img { width: 40px; height: 40px; object-fit: contain; image-rendering: pixelated; }
+.nro-item-detail-heading div { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
+.nro-item-detail-heading strong { color: #175c29; font-size: 11px; }
+.nro-item-detail-heading small, .nro-item-requirement { color: #74542f; font-size: 9px; }
+.nro-item-detail > p { margin: 6px 0; color: #2472a5; font-size: 10px; line-height: 1.35; }
+.nro-item-detail-stats { display: flex; flex-direction: column; gap: 3px; padding-top: 5px; border-top: 1px solid #c6b18f; color: #17702c; font-size: 9px; }
+.nro-item-detail-stats strong { color: #71461e; }
+.nro-item-detail-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.nro-item-detail-actions button { padding: 4px 9px; border: 1px solid #754b22; border-radius: 3px; color: #fff4d2; background: #bb5a1c; font-size: 9px; font-weight: 900; cursor: pointer; }
+.nro-item-detail-actions .nro-not-supported { color: #85592d; font-size: 9px; }
+.nro-detail-backdrop { position: fixed; inset: 0; z-index: 145; display: grid; place-items: center; padding: 12px; background: #20170db3; pointer-events: auto; }
+.nro-detail-popup { box-sizing: border-box; width: min(400px, 88vw); max-height: min(80vh, 520px); overflow: auto; padding: 16px; border: 3px solid #6c4528; border-radius: 9px; background: #f4e8d2; box-shadow: inset 0 0 0 2px #fff8e9, 0 8px 24px #130d08aa; animation: nro-detail-pop-in 160ms ease-out both; }
+.nro-detail-popup .nro-item-detail-heading img { width: 56px; height: 56px; }
+.nro-detail-popup .nro-item-detail-heading strong { font-size: 16px; }
+.nro-detail-popup .nro-item-detail-heading small, .nro-detail-popup .nro-item-requirement { font-size: 12px; }
+.nro-detail-popup > p { font-size: 13px; }
+.nro-detail-popup .nro-item-detail-stats { font-size: 12px; }
+.nro-detail-popup .nro-item-detail-actions button { min-height: 40px; padding: 7px 16px; font-size: 13px; }
+@keyframes nro-detail-pop-in { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.nro-equipment-list, .nro-known-skills { display: flex; flex-direction: column; }
+.nro-equipment-row, .nro-known-skill-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 45px;
+  padding: 2px 3px;
+  border: 0;
+  border-bottom: 1px solid #c4b398;
+  color: #513719;
+  background: #eee7de;
+  text-align: left;
+}
+.nro-equipment-copy { display: flex; flex-direction: column; gap: 1px; }
+.nro-equipment-copy > small:first-child { color: #71532e; font-size: 8px; }
+.nro-equipment-copy strong, .nro-known-skill-copy strong { overflow: hidden; color: #175a2c; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.nro-equipment-stars { flex: 0 0 auto; max-width: 34px; overflow: hidden; color: #e5a900; font-size: 10px; white-space: nowrap; }
+.nro-equipment-detail { display: flex; flex-direction: column; gap: 2px; padding: 5px; color: #1672b5; font-size: 8px; }
+.nro-known-skill-copy { display: flex; flex-direction: column; gap: 2px; }
+.nro-known-skill-copy small { color: #625038; font-size: 8px; }
+.nro-known-skill-copy i, .nro-panel-progress-track { display: block; height: 5px; overflow: hidden; border: 1px solid #836b4b; border-radius: 4px; background: #d0c2a8; }
+.nro-known-skill-copy i b, .nro-panel-progress-track b { display: block; height: 100%; background: #35a84e; }
+.nro-panel-task { padding: 8px; color: #583c20; }
+.nro-panel-task h3 { margin: 0 0 5px; color: #814710; font-size: 12px; }
+.nro-panel-task p { margin: 4px 0; font-size: 10px; }
+.nro-panel-task-progress, .nro-panel-player-summary { display: flex; justify-content: space-between; gap: 4px; margin-top: 8px; font-size: 9px; }
+.nro-panel-player-summary { padding-top: 7px; border-top: 1px solid #c1ae8d; }
+.nro-panel-task-ready { display: block; margin-top: 8px; color: #20703b; font-size: 9px; }
+.nro-panel-empty, .nro-feature-unavailable { padding: 10px 7px; color: #775c3c; font-size: 9px; }
+.nro-guild-panel { padding: 7px; color: #56351c; font-size: 10px; }
+.nro-guild-panel h3 { margin: 2px 0 7px; color: #79461c; font-size: 13px; }
+.nro-guild-panel h4 { margin: 8px 0 4px; color: #70461e; font-size: 10px; }
+.nro-guild-card { display: grid; gap: 3px; padding: 8px; border: 2px solid #91612f; background: #f3d9a4; }
+.nro-guild-card strong { color: #23703a; font-size: 13px; }
+.nro-guild-card span, .nro-guild-card small { color: #684520; }
+.nro-guild-members, .nro-guild-list { display: grid; gap: 3px; }
+.nro-guild-members > div, .nro-guild-list article { display: flex; align-items: center; justify-content: space-between; gap: 5px; padding: 5px; border: 1px solid #baa27c; background: #fff3d6; }
+.nro-guild-members b, .nro-guild-list small { color: #267044; font-size: 9px; }
+.nro-guild-list article > div { display: grid; gap: 2px; min-width: 0; }
+.nro-guild-list strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nro-guild-list button, .nro-guild-action { min-height: 25px; padding: 3px 8px; border: 1px solid #754723; border-radius: 4px; color: #fff1d0; background: #c96b20; font-size: 9px; font-weight: 900; }
+.nro-guild-list button:disabled { opacity: .5; }
+.nro-guild-member-actions { display: flex; flex: 0 0 auto; gap: 3px; }
+.nro-guild-member-actions button, .nro-guild-chat-form button { min-height: 22px; padding: 2px 5px; border: 1px solid #754723; border-radius: 3px; color: #fff1d0; background: #b9621d; font-size: 8px; font-weight: 900; }
+.nro-guild-chat { display: flex; flex-direction: column; gap: 3px; max-height: 110px; min-height: 48px; overflow: auto; padding: 5px; border: 1px solid #94754e; background: #f7eedb; }
+.nro-guild-chat p { margin: 0; overflow-wrap: anywhere; line-height: 1.35; }
+.nro-guild-chat p b { color: #287040; }
+.nro-guild-chat-form { display: flex; gap: 4px; margin: 4px 0; }
+.nro-guild-chat-form input { flex: 1; min-width: 0; height: 25px; padding: 3px 6px; border: 1px solid #9a7344; border-radius: 3px; color: #482d19; background: #fff5df; }
+.nro-guild-create { display: grid; gap: 5px; padding: 6px; border: 1px solid #b39b71; background: #e9dec9; }
+.nro-guild-create label { display: grid; gap: 2px; font-weight: 900; }
+.nro-guild-create input { min-width: 0; height: 27px; padding: 3px 6px; border: 1px solid #9a7344; border-radius: 3px; color: #482d19; background: #fff5df; }
+.nro-inventory-functions { display: flex; flex-direction: column; gap: 5px; padding: 6px; }
+.nro-inventory-functions button { min-height: 31px; border: 1px solid #744622; border-radius: 4px; color: #fff1d0; background: #c96b20; font-size: 9px; font-weight: 900; }
+.nro-inventory-functions label { display: flex; align-items: center; gap: 4px; font-size: 9px; }
+.nro-inventory-footer { display: flex; align-items: center; justify-content: space-between; gap: 3px; flex: 0 0 auto; min-height: 20px; padding: 2px 4px 0; border-top: 1px solid #a68a5e; color: #644520; font-size: 8px; font-weight: 900; }
+.nro-inventory-footer > span { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.nro-currency-icon { display: inline-block; width: 10px; height: 10px; border: 1px solid #745019; border-radius: 50%; box-shadow: inset 0 0 0 2px #ffdf50; background: #d89e17; }
+.nro-currency-icon.blue-gem { width: 9px; height: 11px; border: 0; border-radius: 55% 55% 45% 45%; background: linear-gradient(135deg, #c6ffff, #19cce4 55%, #08709f); clip-path: polygon(50% 0, 100% 42%, 50% 100%, 0 42%); }
+.nro-currency-icon.red-gem { width: 9px; height: 11px; border: 0; border-radius: 55% 55% 45% 45%; background: linear-gradient(135deg, #fff0ed, #ed3654 55%, #8e132a); clip-path: polygon(50% 0, 100% 42%, 50% 100%, 0 42%); }
+.nro-footer-potential { color: #7244a4; }
+.nro-inventory-message { position: absolute; right: 2px; bottom: 22px; left: 2px; margin: 0; padding: 4px; border: 1px solid #71451f; border-radius: 3px; color: #fff0d0; background: #372314ee; font-size: 9px; }
+.nro-skill-list { display: flex; flex-direction: column; min-height: 100%; background: #eee8df; }
+.nro-skill-row {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  min-height: 47px;
+  padding: 3px 4px;
+  border: 0;
+  border-bottom: 1px solid #c5b8a6;
+  color: #5b452b;
+  background: #eee8df;
+  text-align: left;
+  cursor: pointer;
+}
+.nro-skill-row:nth-child(odd) { background: #f2ede5; }
+.nro-skill-row:hover:not(:disabled) { background: #fff6b2; }
+.nro-skill-row:disabled { cursor: default; opacity: .72; }
+.nro-skill-row.selected { background: #fff349; }
+.nro-skill-row-icon {
+  position: relative;
+  display: grid;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid #974c17;
+  border-radius: 4px;
+  outline: 1px solid #e7bd73;
+  color: #fff6cf;
+  background: linear-gradient(145deg, #45bd54, #17642b);
+  box-shadow: inset 0 0 0 2px #f9d991, 0 1px 1px #6c4b30;
+}
+.nro-skill-row-icon svg { width: 25px; height: 25px; filter: drop-shadow(1px 1px #532716); }
+.nro-skill-row-icon small { position: absolute; right: 1px; bottom: 1px; padding: 0 1px; border-radius: 2px; color: #fff; background: #302219bd; font: 900 5px/7px Arial, sans-serif; }
+.nro-stat-icon--hp { color: #ffe7e1; background: linear-gradient(145deg, #e94245, #8d151d); }
+.nro-stat-icon--mp { color: #d5faff; background: linear-gradient(145deg, #24b7ed, #123b9d); }
+.nro-stat-icon--damage { color: #fff5c4; background: linear-gradient(145deg, #ff9b2f, #cc311b); }
+.nro-stat-icon--defense { color: #fff2aa; background: linear-gradient(145deg, #d6b34b, #915015); }
+.nro-stat-icon--critical { color: #e8f1ff; background: linear-gradient(145deg, #368fe6, #173d91); }
+.nro-skill-row-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
+.nro-skill-row-copy > strong { overflow: hidden; color: #3672be; font-size: 9px; font-weight: 900; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+.nro-skill-row-copy > small { overflow: hidden; color: #348247; font-size: 8px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+.nro-skill-row-copy .nro-stat-name--hp { color: #3672be; }
+.nro-skill-row-copy .nro-stat-name--mp { color: #7859b5; }
+.nro-skill-row-copy .nro-stat-name--damage { color: #bd4b21; }
+.nro-skill-row-copy .nro-stat-name--defense { color: #896313; }
+.nro-skill-row-copy .nro-stat-name--critical { color: #3672be; }
+.nro-learned-skill-name { display: flex; justify-content: space-between; gap: 4px; }
+.nro-learned-skill-name > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nro-learned-skill-name small { flex: 0 0 auto; color: #805425; font-size: 8px; }
+.nro-skill-row-copy i { height: 4px; }
+
+@media (max-width: 700px) {
+  .nro-auth-screen {
+    box-sizing: border-box;
+    width: auto;
+    max-width: none;
+    overflow-x: hidden;
+  }
+  .nro-auth-layout {
+    width: calc(100% - 20px) !important;
+    max-width: 440px;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .nro-auth-panel {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100% !important;
+    min-width: 0;
+  }
+  .nro-auth-panel form,
+  .nro-auth-panel label,
+  .nro-auth-panel input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+  }
+  .nro-inventory-panel {
+    width: var(--nro-panel-width);
+    max-width: none !important;
+  }
+  .nro-inventory-stats { padding-block: 3px; }
+  .nro-inventory-tabs button { min-height: 32px; font-size: 7px; }
+}
+
+/* Keep source landscape strips crisp and fully visible in the menu scenes. */
+.nro-menu-layer {
+  background-size: auto 100%;
+  background-repeat: repeat-x;
+  background-position: center bottom;
+}
+.nro-menu-backdrop .nro-menu-clouds { background-size: auto 100%; }
+
+/* The character picker keeps the three supported server races inside the game frame. */
+.nro-character-heading { width: min(470px, calc(100vw - 36px)); }
+.nro-planet-grid {
+  width: min(560px, calc(100vw - 40px));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(8px, 1.6vw, 16px);
+}
+.nro-planet-choice { min-width: 0; }
+
+@media (max-width: 700px) {
+  .nro-character-heading { top: 4%; width: min(470px, calc(100vw - 24px)); }
+  .nro-planet-grid {
+    top: 33%;
+    width: calc(100% - 28px);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .nro-planet-choice { min-height: clamp(76px, 17vh, 110px); padding: 6px 3px; border-radius: 10px; }
+  .nro-planet-caption { font-size: clamp(12px, 3.4vw, 18px); }
+  .nro-planet-name { font-size: 11px; }
+  .nro-planet-detail { font-size: 8px; }
+  .nro-character-preview { left: 14%; bottom: 16%; transform: translateX(-50%) scale(1.05); }
+  .nro-character-actions { right: 10px; left: 10px; gap: 10px; }
+  .nro-character-actions .nro-game-button { width: min(42vw, 190px); min-height: 44px; }
+}
+
+/* Rotate the actual game viewport in portrait; login remains usable upright. */
+@media (orientation: portrait) {
+  .nro-game-frame:has(#game-container):not(:has(.nro-character-screen))::after {
+    content: 'Hãy xoay điện thoại nằm ngang để chơi';
+    position: absolute;
+    z-index: 120;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    color: #fff0bd;
+    background: #08130fee;
+    font-size: clamp(16px, 5vw, 24px);
+    font-weight: 1000;
+    text-align: center;
+    text-shadow: 2px 2px #42200f;
+    pointer-events: none;
+  }
+}
+
+/* Authentication and character creation use the full phone viewport. The actual
+   Phaser world keeps its landscape ratio, while these menus remain usable upright. */
+.nro-auth-screen,
+.nro-character-screen {
+  box-sizing: border-box;
+  width: 100vw;
+  max-width: 100vw;
+  max-height: 100dvh;
+}
+
+@media (orientation: portrait) and (max-width: 700px) {
+  .nro-auth-screen {
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)) !important;
+  }
+  .nro-auth-layout {
+    box-sizing: border-box;
+    width: min(440px, 100%) !important;
+    max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow-y: auto;
+    padding: 2px;
+  }
+  .nro-auth-brand .nro-game-logo { font-size: clamp(21px, 7vw, 30px); }
+  .nro-auth-brand .nro-auth-subtitle { font-size: 12px; }
+  .nro-auth-panel {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100% !important;
+    min-width: 0;
+    padding: clamp(12px, 4vw, 20px) !important;
+  }
+  .nro-auth-panel form,
+  .nro-auth-panel label,
+  .nro-auth-panel input { box-sizing: border-box; width: 100%; min-width: 0; }
+  .nro-auth-remember { font-size: 11px; }
+  .nro-auth-remember p { font-size: 10px; }
+
+  .nro-character-heading { top: max(18px, env(safe-area-inset-top)); }
+  .nro-character-heading h1 { font-size: 23px; }
+  .nro-character-heading p { max-width: 30ch; margin-inline: auto; }
+  .nro-planet-grid {
+    top: 34%;
+    width: min(420px, calc(100% - 28px));
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .nro-planet-choice {
+    min-height: clamp(68px, 10dvh, 88px);
+    align-items: flex-start;
+    justify-content: center;
+    padding: 7px 14px;
+  }
+  .nro-planet-caption { font-size: 16px; }
+  .nro-planet-detail { font-size: 10px; }
+  .nro-character-preview { left: 17%; bottom: 13%; transform: translateX(-50%) scale(.9); }
+  .nro-character-actions { right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); left: 12px; }
+  .nro-character-actions .nro-game-button { width: calc(50% - 5px); min-height: 44px; }
+}
+
+/* Prevent the login switch, wordmark, and remember row from setting a wider
+   intrinsic width than the phone viewport. */
+@media (orientation: portrait) and (max-width: 700px) {
+  .nro-auth-layout,
+  .nro-auth-brand,
+  .nro-auth-panel,
+  .nro-auth-switch,
+  .nro-auth-remember,
+  .nro-auth-remember label {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .nro-auth-layout { width: calc(100vw - 24px) !important; }
+  .nro-auth-brand .nro-game-logo {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .nro-auth-switch { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nro-auth-switch .nro-game-button { min-width: 0; padding-inline: 6px; }
+  .nro-auth-remember label { align-items: flex-start; white-space: normal; }
+}
+
+/* Source NRO menu backgrounds are 168×80 transparent parallax strips. Keep
+   their native aspect ratio and repeat them instead of stretching across the
+   viewport, which smears the pixel art and creates visible seams. */
+.nro-menu-backdrop {
+  background: #38b9f2;
+}
+.nro-menu-sky {
+  inset: 0 0 20%;
+  background: linear-gradient(#149ee6 0%, #63c7ee 62%, #f5d58a 100%);
+}
+.nro-menu-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background-repeat: repeat-x;
+  background-position: center bottom;
+  background-size: auto 100%;
+  image-rendering: pixelated;
+}
+.nro-menu-clouds { bottom: 42%; height: 36%; opacity: .95; }
+.nro-menu-far { bottom: 31%; height: 38%; }
+.nro-menu-rocks { bottom: 22%; height: 34%; }
+.nro-menu-near { bottom: 15%; height: 31%; }
+.nro-menu-ground {
+  height: 25%;
+  border-top: 6px solid #397b31;
+  background-color: #125126;
+  background-image: url('/assets/nro/ui/grass-ground-tile.svg');
+  background-repeat: repeat;
+  background-size: 72px 30px;
+  box-shadow: inset 0 7px #83b74a;
+}
+.nro-menu-ground--desert {
+  border-top-color: #805126;
+  background-color: #bd8847;
+  background-image: repeating-linear-gradient(90deg, transparent 0 20px, #8e6135 20px 24px), repeating-linear-gradient(0deg, transparent 0 12px, #d1a25e 12px 16px);
+  background-size: 48px 32px;
+  box-shadow: inset 0 5px #e3bd72;
+}
+
+.nro-character-panel { min-height: 100%; height: 100%; }
+.nro-character-heading { z-index: 2; }
+.nro-planet-grid { z-index: 2; }
+.nro-character-preview { z-index: 2; }
+.nro-character-actions { z-index: 3; }
+
+@media (max-width: 700px) {
+  .nro-menu-clouds { bottom: 42%; height: 34%; }
+  .nro-menu-far { bottom: 31%; height: 36%; }
+  .nro-menu-rocks { bottom: 22%; height: 32%; }
+  .nro-menu-near { bottom: 15%; height: 29%; }
+  .nro-character-heading { z-index: 3; }
+  .nro-planet-grid { z-index: 3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nro-game-button { transition: none; }
+}
+
+/* Portrait phones keep a clear rotate prompt instead of shrinking the 16:9
+   game world until the HUD and touch controls become unusable. */
+.nro-rotate-hint { display: none; }
+@media (orientation: portrait) and (max-width: 700px) {
+  .nro-app-shell--playing .nro-rotate-hint {
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px;
+    color: #fff0c3;
+    background: #12251b;
+    text-align: center;
+    text-shadow: 1px 2px #281a0e;
+  }
+  .nro-rotate-hint strong { color: #ffc452; font-size: 20px; }
+  .nro-rotate-hint > span:last-child { max-width: 28ch; font-size: 13px; }
+  .nro-rotate-icon {
+    width: 52px;
+    height: 36px;
+    border: 4px solid #f4c15d;
+    border-radius: 7px;
+    box-shadow: 0 4px #68451f;
+    transform: rotate(-90deg);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  /* Keep chat at the bottom center; the old touch offset lifted it into the
+     playfield and collided with NPC prompts on short screens. */
+  .hud-chat-wrap {
+    bottom: max(5px, env(safe-area-inset-bottom));
+    width: min(320px, calc(100vw - 200px));
+  }
 }
 

@@ -40,6 +40,18 @@ class GameNetwork {
         }
         this.token = null;
     }
+
+    logout() {
+        const token = this.token;
+        this.disconnect();
+        if (token) {
+            fetch(`${serverUrl}/api/auth/logout`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                keepalive: true
+            }).catch(() => {});
+        }
+    }
 }
 
 export const networkInstance = new GameNetwork();

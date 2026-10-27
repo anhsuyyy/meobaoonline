@@ -3,7 +3,31 @@ const router = express.Router();
 const authService = require('./authService');
 const userRepository = require('./userRepository');
 const authenticateToken = require('../../infrastructure/http/authMiddleware');
-const gameConfig = require('../../config/gameConfig.json');
+
+const authAttempts = new Map();
+function rateLimitAuth({ limit, windowMs }) {
+    return (req, res, next) => {
+        const now = Date.now();
+        const ip = req.ip || req.socket.remoteAddress || 'unknown';
+        const key = `${req.path}:${ip}`;
+        let bucket = authAttempts.get(key);
+        if (!bucket || now - bucket.startedAt >= windowMs) {
+            bucket = { startedAt: now, count: 0 };
+            authAttempts.set(key, bucket);
+        }
+        if (bucket.count >= limit) {
+            res.set('Retry-After', String(Math.ceil((bucket.startedAt + windowMs - now) / 1000)));
+            return res.status(429).json({ error: 'Bạn thao tác quá nhanh. Hãy thử lại sau.' });
+        }
+        bucket.count += 1;
+        if (authAttempts.size > 2000) {
+            for (const [entry, value] of authAttempts) {
+                if (now - value.startedAt >= windowMs) authAttempts.delete(entry);
+            }
+        }
+        return next();
+    };
+}
 
 function sendError(res, error, fallbackMessage) {
     const status = Number.isInteger(error.status) ? error.status : 500;
@@ -12,7 +36,7 @@ function sendError(res, error, fallbackMessage) {
 }
 
 // Đăng ký tài khoản
-router.post('/register', async (req, res) => {
+router.post('/register', rateLimitAuth({ limit: 5, windowMs: 60 * 60 * 1000 }), async (req, res) => {
     try {
         const { username, password, email } = req.body || {};
         const result = await authService.register({ username, password, email });
@@ -23,13 +47,29 @@ router.post('/register', async (req, res) => {
 });
 
 // Đăng nhập
-router.post('/login', async (req, res) => {
+router.post('/login', rateLimitAuth({ limit: 10, windowMs: 15 * 60 * 1000 }), async (req, res) => {
     try {
         const { username, password } = req.body || {};
         const result = await authService.login({ username, password });
         res.status(200).json(result);
     } catch (err) {
         sendError(res, err, 'Không thể kết nối dữ liệu để đăng nhập. Vui lòng thử lại.');
+    }
+});
+
+router.post('/logout', authenticateToken, async (req, res) => {
+    try {
+        await userRepository.revokeSessions(req.user.userId);
+        const io = req.app.locals.io;
+        for (const socket of io?.sockets?.sockets?.values?.() || []) {
+            if (String(socket.user?.userId) === String(req.user.userId)) {
+                socket.emit('authenticationExpired');
+                socket.disconnect(true);
+            }
+        }
+        return res.status(204).end();
+    } catch (err) {
+        return sendError(res, err, 'Không thể thu hồi phiên đăng nhập. Vui lòng thử lại.');
     }
 });
 
@@ -47,10 +87,7 @@ router.get('/me', authenticateToken, async (req, res) => {
             email: user.email,
             createdAt: user.createdAt,
             character: {
-                ...user.character,
-                className: user.character.classId
-                    ? gameConfig.classes[user.character.classId]?.name || null
-                    : null
+                ...user.character
             }
         });
     } catch (err) {

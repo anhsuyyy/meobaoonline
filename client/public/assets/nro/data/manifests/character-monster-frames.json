@@ -1,0 +1,190 @@
+{
+  "source": "NRO_NhanVat_Quai_Frames",
+  "characters": [
+    "earth",
+    "namek",
+    "saiyan"
+  ],
+  "characterActions": [
+    "dung",
+    "di",
+    "bay",
+    "tancong",
+    "chuong"
+  ],
+  "characterFrameCount": 5,
+  "mobs": {
+    "0": {
+      "slug": "moc-nhan",
+      "stationary": true,
+      "idleAction": "di",
+      "actions": [
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "1": {
+      "slug": "khung-long",
+      "stationary": false,
+      "idleAction": "di",
+      "actions": [
+        "di",
+        "tancong",
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "2": {
+      "slug": "lon-loi",
+      "stationary": false,
+      "idleAction": "di",
+      "actions": [
+        "di",
+        "tancong",
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "3": {
+      "slug": "quy-dat",
+      "stationary": false,
+      "idleAction": "di",
+      "actions": [
+        "di",
+        "tancong",
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "4": {
+      "slug": "khung-long-me",
+      "stationary": false,
+      "idleAction": "di",
+      "actions": [
+        "di",
+        "tancong",
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "5": {
+      "slug": "lon-loi-me",
+      "stationary": false,
+      "idleAction": "di",
+      "actions": [
+        "di",
+        "tancong",
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "6": {
+      "slug": "quy-dat-me",
+      "stationary": false,
+      "idleAction": "di",
+      "actions": [
+        "di",
+        "tancong",
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "7": {
+      "slug": "than-lan-bay",
+      "stationary": false,
+      "idleAction": "di",
+      "actions": [
+        "di",
+        "tancong",
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "8": {
+      "slug": "phi-long",
+      "stationary": false,
+      "idleAction": "di",
+      "actions": [
+        "di",
+        "tancong",
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "9": {
+      "slug": "quy-bay",
+      "stationary": false,
+      "idleAction": "di",
+      "actions": [
+        "di",
+        "tancong",
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "10": {
+      "slug": "than-lan-me",
+      "stationary": false,
+      "idleAction": "di",
+      "actions": [
+        "di",
+        "tancong",
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "11": {
+      "slug": "phi-long-me",
+      "stationary": false,
+      "idleAction": "di",
+      "actions": [
+        "di",
+        "tancong",
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "12": {
+      "slug": "quy-bay-me",
+      "stationary": false,
+      "idleAction": "di",
+      "actions": [
+        "di",
+        "tancong",
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "16": {
+      "slug": "heo-rung",
+      "stationary": false,
+      "idleAction": "di",
+      "actions": [
+        "di",
+        "tancong",
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "76": {
+      "slug": "co-may-huy-diet",
+      "stationary": false,
+      "idleAction": "di",
+      "actions": [
+        "di",
+        "tancong",
+        "chet"
+      ],
+      "frameCount": 5
+    },
+    "82": {
+      "slug": "moc-nhan",
+      "stationary": true,
+      "idleAction": "di",
+      "actions": [
+        "chet"
+      ],
+      "frameCount": 5
+    }
+  }
+}

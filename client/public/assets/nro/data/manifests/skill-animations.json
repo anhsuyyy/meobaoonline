@@ -1,0 +1,83 @@
+{
+  "earth": {
+    "s1": {
+      "sourceId": 0,
+      "name": "Chiêu đấm Dragon",
+      "frames": []
+    },
+    "s2": {
+      "sourceId": 1,
+      "name": "Chiêu Kamejoko",
+      "frames": []
+    },
+    "s3": {
+      "sourceId": 6,
+      "name": "Thái Dương Hạ San",
+      "frames": []
+    },
+    "s4": {
+      "sourceId": 9,
+      "name": "Kaioken",
+      "frames": []
+    },
+    "s5": {
+      "sourceId": 10,
+      "name": "Quả cầu kênh khi",
+      "frames": []
+    }
+  },
+  "namek": {
+    "s1": {
+      "sourceId": 2,
+      "name": "Chiêu đấm Demon",
+      "frames": []
+    },
+    "s2": {
+      "sourceId": 3,
+      "name": "Chiêu Masenko",
+      "frames": []
+    },
+    "s3": {
+      "sourceId": 7,
+      "name": "Trị thương",
+      "frames": []
+    },
+    "s4": {
+      "sourceId": 11,
+      "name": "Makankosappo",
+      "frames": []
+    },
+    "s5": {
+      "sourceId": 12,
+      "name": "Đẻ trứng",
+      "frames": []
+    }
+  },
+  "saiyan": {
+    "s1": {
+      "sourceId": 4,
+      "name": "Chiêu đấm Galick",
+      "frames": []
+    },
+    "s2": {
+      "sourceId": 5,
+      "name": "Chiêu Antomic",
+      "frames": []
+    },
+    "s3": {
+      "sourceId": 8,
+      "name": "Tái tạo năng lượng",
+      "frames": []
+    },
+    "s4": {
+      "sourceId": 13,
+      "name": "Biến hình",
+      "frames": []
+    },
+    "s5": {
+      "sourceId": 14,
+      "name": "Tự phát nổ",
+      "frames": []
+    }
+  }
+}

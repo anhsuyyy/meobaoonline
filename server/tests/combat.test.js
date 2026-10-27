@@ -1,6 +1,6 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
-const { calculateSkillDamage, checkAABBCollision } = require('../src/game/combat');
+const { calculateSkillDamage, applyDamagePercentSteps, checkAABBCollision } = require('../src/game/combat');
 
 describe('Combat Engine - Server Authoritative Logic', () => {
     const defaultAttacker = { atk: 50 };
@@ -27,6 +27,30 @@ describe('Combat Engine - Server Authoritative Logic', () => {
         const resHighArmor = calculateSkillDamage({ atk: 100 }, highArmorTarget, { damageMultiplierMin: 1.0, damageMultiplierMax: 1.0 });
 
         assert.ok(resHighArmor.damage < resNoArmor.damage);
+    });
+
+    it('applies equipped NRO critical-damage bonus only when the hit crits', () => {
+        const attacker = { str: 1000 };
+        const target = { armor: 0 };
+        const normalCrit = calculateSkillDamage(attacker, target, {
+            damagePercent: 100, critChancePercent: 100, canCrit: true
+        });
+        const equippedCrit = calculateSkillDamage(attacker, target, {
+            damagePercent: 100, critChancePercent: 100, critDamageBonusPercent: 20, canCrit: true
+        });
+        assert.equal(normalCrit.isCrit, true);
+        assert.equal(equippedCrit.isCrit, true);
+        assert.ok(equippedCrit.damage > normalCrit.damage);
+    });
+
+    it('applies NRO monster damage options sequentially with integer truncation', () => {
+        assert.equal(applyDamagePercentSteps(101, [10, 10]), 122);
+        assert.equal(applyDamagePercentSteps(100, [10, 10]), 121);
+        assert.equal(applyDamagePercentSteps(100, [10, Number.NaN, 0]), 110);
+        const result = calculateSkillDamage({ str: 103 }, { armor: 0 }, {
+            damagePercent: 100, damagePercentSteps: [10, 10], canCrit: false
+        });
+        assert.equal(result.damage, 123);
     });
 
     it('giảm sát thương có trần tối đa 80% kể cả khi giáp cực lớn', () => {

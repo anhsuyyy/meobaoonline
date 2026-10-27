@@ -12,8 +12,11 @@
     "dev:client": "npm --prefix client run dev",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "build:client": "npm --prefix client run build",
+    "smoke:live": "node scripts/smokeTestNroRuntime.mjs",
+    "verify:nro-importer": "node scripts/verifyNroImporter.mjs",
     "test:server": "npm --prefix server test",
-    "test": "npm run test:server"
+    "test:client": "npm --prefix client test",
+    "test": "npm run test:server && npm run test:client"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

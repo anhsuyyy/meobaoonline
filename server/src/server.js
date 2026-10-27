@@ -33,6 +33,7 @@ async function bootstrap() {
             methods: ['GET', 'POST']
         }
     });
+    app.locals.io = io;
     setupGameSocket(io);
 
     // 2. Lắng nghe HTTP & WebSocket

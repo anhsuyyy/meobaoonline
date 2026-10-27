@@ -18,7 +18,7 @@ const TargetStatusPanel = () => {
     const accentColor = isBoss ? '#c084fc' : isElite ? '#f87171' : '#f59e0b';
     const borderGlow  = isBoss ? 'rgba(192,132,252,0.5)' : isElite ? 'rgba(248,113,113,0.5)' : 'rgba(217,119,6,0.4)';
     const typeLabel   = isBoss ? 'BOSS' : isElite ? 'TINH ANH' : 'Thường';
-    const typeEmoji   = isBoss ? '💀' : isElite ? '👑' : '🐭';
+    const targetKind = isBoss ? 'boss' : isElite ? 'elite' : 'mob';
     const barColor    = isBoss
         ? 'linear-gradient(90deg, #581c87, #a855f7, #d8b4fe)'
         : isElite
@@ -27,7 +27,7 @@ const TargetStatusPanel = () => {
 
     return (
         <div className="pointer-events-auto" style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.8))' }}>
-            <div style={{
+            <div className="hud-target-card" style={{
                 background: 'linear-gradient(180deg, rgba(28,18,8,0.95) 0%, rgba(12,8,3,0.97) 100%)',
                 border: `2px solid ${accentColor}`,
                 outline: '1px solid rgba(0,0,0,0.6)',
@@ -40,7 +40,7 @@ const TargetStatusPanel = () => {
                 {/* Header: Tên quái + badge loại + nút đóng */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: 14 }}>{typeEmoji}</span>
+                        <span className={`nro-target-glyph ${targetKind}`} aria-hidden="true" />
                         <span style={{
                             color: accentColor, fontWeight: 700, fontSize: 11,
                             textShadow: `0 0 8px ${borderGlow}`,
@@ -65,7 +65,10 @@ const TargetStatusPanel = () => {
                         )}
                     </div>
                     <button
-                        onClick={() => dispatch(clearSelectedTarget())}
+                        onClick={() => {
+                            dispatch(clearSelectedTarget());
+                            window.dispatchEvent(new CustomEvent('game:clear-target'));
+                        }}
                         style={{
                             color: '#94a3b8', fontSize: 12, background: 'none', border: 'none',
                             cursor: 'pointer', padding: '0 2px', flexShrink: 0,
@@ -78,7 +81,7 @@ const TargetStatusPanel = () => {
                 {/* HP quái */}
                 <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                        <span style={{ color: '#fca5a5', fontSize: 9, fontWeight: 700 }}>❤ HP</span>
+                        <span style={{ color: '#fca5a5', fontSize: 9, fontWeight: 700 }}><i className="nro-stat-glyph hp mr-1" aria-hidden="true" />HP</span>
                         <span style={{ color: '#cbd5e1', fontSize: 9, fontFamily: 'monospace' }}>
                             {selectedTarget.hp.toLocaleString()} / {selectedTarget.maxHp.toLocaleString()}
                         </span>
@@ -100,15 +103,15 @@ const TargetStatusPanel = () => {
                 {/* Trạng thái ngắn */}
                 <div style={{ display: 'flex', gap: 4 }}>
                     {[
-                        { label: '⚔ ATK', value: isElite ? 'Cao' : 'TB', color: '#fca5a5' },
-                        { label: '🛡 DEF', value: isElite ? 'TB' : 'Thấp', color: '#93c5fd' },
+                        { label: 'ATK', glyph: 'attack', value: Number.isFinite(selectedTarget.atk) ? selectedTarget.atk.toLocaleString() : (isElite ? 'Cao' : 'TB'), color: '#fca5a5' },
+                        { label: 'DEF', glyph: 'defense', value: Number.isFinite(selectedTarget.def) ? selectedTarget.def.toLocaleString() : (isElite ? 'TB' : 'Thấp'), color: '#93c5fd' },
                     ].map(s => (
                         <span key={s.label} style={{
                             background: 'rgba(0,0,0,0.5)',
                             border: '1px solid #292524',
-                            borderRadius: 4, padding: '1px 5px',
+                            borderRadius: 4, padding: '1px 5px', display: 'inline-flex', alignItems: 'center', gap: 3,
                             fontSize: 9, color: s.color, fontWeight: 600
-                        }}>{s.label}: {s.value}</span>
+                        }}><i className={`nro-combat-glyph ${s.glyph}`} aria-hidden="true" />{s.label}: {s.value}</span>
                     ))}
                 </div>
             </div>

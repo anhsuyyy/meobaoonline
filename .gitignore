@@ -15,6 +15,15 @@ dist-ssr/
 build/
 *.local
 
+# Local browser QA profiles and screenshots (never ship test browser state).
+/.tmp-*/
+.tmp-*.png
+login-*.png
+screenshot-login-test.png
+
+# Full extracted source archive is kept locally; only curated runtime assets ship.
+client/nro-source-archive/
+
 # Logs
 logs/
 *.log
@@ -28,3 +37,9 @@ pnpm-debug.log*
 .idea/
 .DS_Store
 Thumbs.db
+/artwork-source/
+/NRO_Art_Pack/
+/NRO_NhanVat_Quai_Frames/
+/NRO_Art_Pack.zip
+/NRO_NhanVat_Quai_Frames.zip
+/storyboard_red_carpet_white_dress.html

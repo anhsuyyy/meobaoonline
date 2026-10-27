@@ -39,6 +39,16 @@ class UserRepository {
         }
     }
 
+    async revokeSessions(userId) {
+        requireDatabase();
+        try {
+            return await User.findByIdAndUpdate(userId, { $inc: { sessionVersion: 1 } }, { new: true })
+                .select('_id sessionVersion').lean();
+        } catch (error) {
+            throw markDatabaseError(error);
+        }
+    }
+
     async createUser({ username, email, passwordHash, salt }) {
         requireDatabase();
         const cleanName = username.toLowerCase().trim();
@@ -59,34 +69,46 @@ class UserRepository {
 
     async updateCharacter(userId, character) {
         requireDatabase();
+        const expectedRevision = Number.isSafeInteger(Number(character.revision)) && Number(character.revision) >= 0
+            ? Number(character.revision) : 0;
         const fields = [
-            'level', 'exp', 'maxExp', 'hp', 'maxHp', 'mp', 'maxMp',
-            'gold', 'dtn', 'position', 'questProgress', 'questCompleted'
+            'level', 'exp', 'maxExp', 'agi', 'skillLevels', 'hp', 'maxHp', 'mp', 'maxMp',
+            'gold', 'dtn', 'power', 'position', 'nroCharacter', 'questProgress', 'questCompleted'
         ];
         const updates = Object.fromEntries(
             fields.map((field) => [`character.${field}`, character[field]])
         );
         try {
-            return await User.findByIdAndUpdate(
-                userId,
-                { $set: updates },
+            const revisionFilter = expectedRevision === 0
+                ? { $or: [{ 'character.revision': 0 }, { 'character.revision': { $exists: false } }] }
+                : { 'character.revision': expectedRevision };
+            const updated = await User.findOneAndUpdate(
+                { _id: userId, ...revisionFilter },
+                { $set: updates, $inc: { 'character.revision': 1 } },
                 { new: true, runValidators: true }
-            ).select('character').lean();
+            ).select('character.revision').lean();
+            if (!updated) {
+                const conflict = new Error('Tiến trình nhân vật đã được cập nhật ở phiên khác. Hãy đăng nhập lại để tải dữ liệu mới.');
+                conflict.status = 409;
+                conflict.code = 'CHARACTER_REVISION_CONFLICT';
+                throw conflict;
+            }
+            return { revision: updated.character.revision };
         } catch (error) {
+            if (error.code === 'CHARACTER_REVISION_CONFLICT') throw error;
             throw markDatabaseError(error);
         }
     }
 
-    async selectClass(userId, classId, minimumLevel) {
+    async createNroCharacter(userId, nroCharacter) {
         requireDatabase();
         try {
             return await User.findOneAndUpdate(
+                { _id: userId, 'character.nroCharacter.created': { $ne: true } },
                 {
-                    _id: userId,
-                    'character.level': { $gte: minimumLevel },
-                    'character.classId': null
+                    $set: Object.fromEntries(Object.entries(nroCharacter).map(([key, value]) => [`character.nroCharacter.${key}`, value])),
+                    $inc: { 'character.revision': 1 }
                 },
-                { $set: { 'character.classId': classId } },
                 { new: true, runValidators: true }
             ).select('character').lean();
         } catch (error) {

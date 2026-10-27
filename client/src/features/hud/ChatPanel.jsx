@@ -13,20 +13,38 @@ const CHANNEL_COLORS = {
 /**
  * ChatPanel - Góc dưới bên trái, phong cách MMORPG cổ điển
  */
-const ChatPanel = () => {
+const ChatPanel = ({ variant = 'default' }) => {
     const dispatch = useDispatch();
     const { chatMessages, isChatOpen } = useSelector((state) => state.game);
     const [activeTab, setActiveTab] = useState('all');
     const [inputText, setInputText] = useState('');
     const [sendError, setSendError] = useState('');
+    const [classicOpen, setClassicOpen] = useState(false);
+    const [previewEnabled, setPreviewEnabled] = useState(() => localStorage.getItem('nro:chat-preview') !== 'false');
     const msgListRef = useRef(null);
+    const inputRef = useRef(null);
+
+    useEffect(() => {
+        const preview = (event) => setPreviewEnabled(event.detail !== false);
+        const close = (event) => { if (event.code === 'Escape') setClassicOpen(false); };
+        window.addEventListener('game:nro-chat-preview', preview);
+        window.addEventListener('keydown', close);
+        return () => {
+            window.removeEventListener('game:nro-chat-preview', preview);
+            window.removeEventListener('keydown', close);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (classicOpen) inputRef.current?.focus();
+    }, [classicOpen]);
 
     // Auto-scroll xuống dưới khi có tin nhắn mới
     useEffect(() => {
         if (msgListRef.current) {
             msgListRef.current.scrollTop = msgListRef.current.scrollHeight;
         }
-    }, [chatMessages, isChatOpen]);
+    }, [chatMessages, isChatOpen, classicOpen, activeTab]);
 
     const filteredMessages = chatMessages.filter((msg) => {
         if (activeTab === 'all') return true;
@@ -71,17 +89,47 @@ const ChatPanel = () => {
         boxShadow: '0 4px 16px rgba(0,0,0,0.85), inset 0 1px 3px rgba(251,191,36,0.1)',
     };
 
+    if (variant === 'classic') {
+        const latest = chatMessages.filter((message) => message.channel !== 'system').at(-1);
+        const bubble = <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 10h20q4 0 4 4v13q0 4-4 4h-8l-8 6v-6h-4q-4 0-4-4V14q0-4 4-4Z" fill="currentColor" /><path d="M13 17h14m-14 6h14" stroke="#e67b19" strokeWidth="3" strokeLinecap="round" /></svg>;
+        return <div className="classic-chat">
+            <div className="classic-chat-summary">
+                {previewEnabled && <>
+                    <button type="button" className="classic-round-button classic-world-chat" aria-label="Mở chat thế giới" onClick={() => { setActiveTab('world'); setClassicOpen(true); }}>{bubble}</button>
+                    <button type="button" className="classic-chat-preview" onClick={() => setClassicOpen((value) => !value)} aria-label="Đọc tin nhắn chat">
+                        <img src="/assets/nro/character/td/dung/dung1.png" alt="" draggable="false" />
+                        <span><strong>{latest?.senderName || 'Trò chuyện'}</strong><span>{latest?.text || 'Chạm để gửi tin nhắn'}</span></span>
+                    </button>
+                </>}
+                <button type="button" className="classic-round-button classic-chat-toggle" aria-label={classicOpen ? 'Đóng chat' : 'Mở chat'} aria-expanded={classicOpen}
+                    onClick={() => setClassicOpen((value) => !value)}>{bubble}</button>
+            </div>
+            {classicOpen && <section className="classic-chat-window" aria-label="Trò chuyện">
+                <header><strong>Trò chuyện</strong><button type="button" aria-label="Thu nhỏ chat" onClick={() => setClassicOpen(false)}>×</button></header>
+                <nav aria-label="Kênh chat">{tabs.map((tab) => <button type="button" key={tab.key} aria-pressed={activeTab === tab.key}
+                    onClick={() => setActiveTab(tab.key)}>{tab.label}</button>)}</nav>
+                <div className="classic-chat-log" ref={msgListRef} role="log" aria-label="Tin nhắn">
+                    {filteredMessages.map((message) => <p key={message.messageId}><strong>{message.senderName || 'Hệ thống'}: </strong>{message.text}</p>)}
+                    {!filteredMessages.length && <p className="classic-chat-empty">Chưa có tin nhắn trong kênh này.</p>}
+                </div>
+                <form onSubmit={handleSendMessage}><input ref={inputRef} aria-label="Nội dung tin nhắn" value={inputText} maxLength={300}
+                    onChange={(event) => setInputText(event.target.value)} placeholder="Nhập tin nhắn…" /><button type="submit">Gửi</button></form>
+                {sendError && <p className="classic-chat-error" role="status">{sendError}</p>}
+            </section>}
+        </div>;
+    }
+
     return (
-        <div className="pointer-events-auto flex flex-col" style={{ maxWidth: 300, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.8))' }}>
+        <div className={`hud-chat-panel pointer-events-auto flex flex-col ${isChatOpen ? 'chat-open' : 'chat-closed'}`} style={{ maxWidth: 300, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.8))' }}>
             {/* Tab bar + nút toggle */}
-            <div style={{
+            <div className="hud-chat-header" style={{
                 ...panelStyle,
                 borderRadius: '8px 8px 0 0',
                 borderBottom: 'none',
                 display: 'flex', alignItems: 'center', gap: 2,
                 padding: '3px 6px'
             }}>
-                <span style={{ color: '#d97706', fontSize: 10, marginRight: 3 }}>💬</span>
+                <span className="nro-chat-glyph" aria-hidden="true" />
                 {tabs.map(t => (
                     <button
                         key={t.key}
@@ -114,7 +162,7 @@ const ChatPanel = () => {
 
             {/* Body chat */}
             {isChatOpen ? (
-                <div style={{
+                <div className="hud-chat-body" style={{
                     ...panelStyle,
                     borderRadius: '0 0 8px 8px',
                     borderTop: '1px solid #451a03',
@@ -125,6 +173,7 @@ const ChatPanel = () => {
                     {/* Danh sách tin nhắn */}
                     <div
                         ref={msgListRef}
+                        className="hud-chat-messages"
                         style={{
                             height: 100, overflowY: 'auto',
                             display: 'flex', flexDirection: 'column', gap: 2,

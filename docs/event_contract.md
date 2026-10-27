@@ -1,11 +1,11 @@
-# 📡 Socket.IO Event Contract — Mèo Đa Vũ Trụ Online (V2.0)
+# Socket.IO Event Contract — NRO Web
 
 Nguyên tắc: **Server-Authoritative**. Mọi trạng thái vị trí, máu, mana, nhặt đồ và combat đều do Server kiểm tra và quyết định.
 
 ---
 
 ## 1. Handshake & Room
-- **Room mặc định**: `room_chuong0` (Chương 0: Trạm Cào).
+- **Room prototype cũ**: `room_chuong0` (Chương 0: Trạm Cào). NRO dùng `map_{mapId}_zone_{zoneId}` để tách map/khu.
 - **Kết nối thành công**:
   - Server gửi event `initialState` cho riêng client kết nối.
   - Server gửi event `newPlayer` cho các client khác trong phòng.
@@ -19,16 +19,18 @@ Nguyên tắc: **Server-Authoritative**. Mọi trạng thái vị trí, máu, ma
 | `initialState` | Server ➔ Client | `{ playerId, players, monsters, items, config }` | Gửi toàn bộ snapshot thế giới khi vừa kết nối. |
 | `newPlayer` | Server ➔ Client (Room) | `{ id, x, y, hp, maxHp, className }` | Thông báo người chơi mới gia nhập phòng. |
 | `playerDisconnected` | Server ➔ Client (Room) | `playerId: string` | Người chơi ngắt kết nối và dọn entity trên client. |
-| `playerInput` | Client ➔ Server | `{ up: bool, down: bool, left: bool, right: bool }` | Chỉ nhận bốn boolean hướng, không nhận tọa độ hay field phụ; server giới hạn burst 30 và tốc độ trung bình 120 event/giây mỗi socket. Input bị vượt giới hạn sẽ bị bỏ qua. Server áp dụng input ở tick 20Hz, chuẩn hóa di chuyển chéo và giới hạn hitbox trong map. |
-| `stateUpdate` | Server ➔ Client (Room) | `{ players: {}, monsters: {} }` | Snapshot đồng bộ vị trí & HP ở tần số 20Hz (mỗi 50ms). |
-| `playerAttack` | Client ➔ Server | `{ skillId: 'basic' \| 's1' \| 's2' \| 's3' \| 's4' \| 's5' }` | Yêu cầu đánh thường hoặc dùng một trong năm skill; server xác thực cấu hình, MP, cooldown, tầm đánh và hiệu ứng. |
-| `playerAttacked` | Server ➔ Client (Room) | `{ playerId, skillId, hits: [{ monsterId, damage, isCrit, isDead }], healed }` | Kết quả combat authoritative để render animation, sát thương hoặc lượng HP hồi. |
+| `playerInput` | Client ➔ Server | `{ up?, down?, left?, right?, jump? }` | PC dùng phím mũi tên; mobile giữ nút D-pad/nhảy để gửi hướng và nhả nút gửi trạng thái dừng. WASD không điều khiển nhân vật. Server giới hạn tốc độ input, áp dụng movement ở tick và kiểm tra collision authoritative. |
+| `stateUpdate` | Server ➔ Client (Room) | `{ players: {}, monsters: {} }` | Snapshot vị trí, HP và status effect đang còn hạn ở tần số 20Hz (mỗi 50ms). |
+| `playerAttack` | Client ➔ Server | `{ skillId: 'basic' \| 's1' \| 's2' \| 's3' \| 's4' \| 's5', targetId?, targetPos? }` | Yêu cầu đánh thường hoặc dùng skill class hiện tại; server xác thực MP, cooldown, tầm đánh, mục tiêu và hiệu ứng. |
+| `skillSuccess` | Server ➔ Client (Room) | `{ playerId, skillId, skillLevel, skillType, cooldownMs, targetId, targetPos, damageTaken, effects, position? }` | Xác nhận cast authoritative; client khởi động cooldown HUD, hoạt ảnh/VFX theo type và nội suy dash. |
+| `damageTaken` | Server ➔ Client (Room) | `{ playerId, skillId, skillType, damageTaken, healed? }` | Báo sát thương/heal áp dụng ngay hoặc theo tick zone/channel; từng nạn nhân có `targetId`, `targetType`, HP và damage. |
+| `playerAttacked` | Server ➔ Client (Room) | `{ playerId, skillId, skillType, cooldownMs, miss, hits, healed }` | Event tương thích và thông báo miss; nguồn damage authoritative là `damageTaken`. |
 | `statsUpdate` | Server ➔ Client | `{ hp, maxHp, mp, maxMp, gold, dtn, level, exp }` | Đồng bộ chỉ số bền vững của nhân vật về Redux UI. |
 | `toggleAuto` | Client ➔ Server | `status: boolean` | Bật hoặc tắt chế độ Auto Farm. |
 | `autoStateChanged` | Server ➔ Client | `{ isAuto: bool, anchor: { x, y } }` | Xác nhận trạng thái Auto Farm và vị trí neo (Anchor) Leash Circle. |
 | `autoAttackTrigger` | Server ➔ Client | `{ skillId: string }` | Lệnh server kích hoạt xuất chiêu khi Auto Farm ở cự ly hợp lệ. |
 | `itemDropped` | Server ➔ Client (Room) | `{ id, type: 'gold', x, y, value }` | Rơi xu vàng khi quái chết. |
-| `pickupItem` | Client ➔ Server | `itemId: string` | Yêu cầu nhặt vật phẩm gần người chơi (< 60px). |
+| `pickupItem` | Client ➔ Server | `itemId: string` | Yêu cầu nhặt vật phẩm trong bán kính 6m (60px theo world scale 10px/m); server kiểm tra lại khoảng cách. |
 | `itemPicked` | Server ➔ Client (Room) | `{ itemId, playerId }` | Xác nhận nhặt vật phẩm thành công, dọn dẹp item trên bản đồ. |
 | `chatSend` | Client ➔ Server | `{ channel: 'world' \| 'party' \| 'area', text }` + ACK | Máy chủ xác thực kênh, nội dung và tốc độ gửi; client không được gửi kênh `system`. |
 | `chatHistory` | Server ➔ Client | `{ channels: { world, system, area, party } }` | 50 tin gần nhất mỗi kênh có quyền xem; gửi khi join/reconnect. |
@@ -36,6 +38,10 @@ Nguyên tắc: **Server-Authoritative**. Mọi trạng thái vị trí, máu, ma
 | `chatError` | Server ➔ Client | `{ message }` | Lỗi gửi chat khi client không dùng ACK callback. |
 | `questProgressUpdate`| Server ➔ Client | `{ questId, progress, target, status }` | Cập nhật tiến độ nhiệm vụ. |
 | `questCompleted` | Server ➔ Client | `{ questId, title, rewardGold, rewardDtn }` | Cấp thưởng nhiệm vụ hoàn thành. |
+| `nroTaskUpdate` | Server ➔ Client | `{ taskId, status, subtaskIndex, progress, target, objective, targetMapId?, targetMapName? }` | Snapshot nhiệm vụ chính NRO sau khi hạ quái, nhặt vật phẩm, nâng chỉ số, chuyển map hoặc báo cáo NPC; nội dung được khôi phục từ trạng thái đã lưu khi kết nối lại. |
+| `trainNroStat` | Client ➔ Server | `{ statType, points }` | Yêu cầu dùng tiềm năng nâng chỉ số; server xác thực cost/trần, lưu chỉ số và có thể tiến nhiệm vụ. |
+| `mapTransition` | Server ➔ Client | `{ mapEntry, zoneId, player, players, monsters, items }` | Chuyển map qua waypoint, server đổi room/khu và gửi snapshot đích authoritative. |
+| `travelNroPlanet` | Client ➔ Server | `{ destinationMapId: 0 \| 7 \| 14 }` | Chọn hành tinh tại NPC trạm tàu. Server xác thực map trạm, NPC, khoảng cách, đích hợp lệ và trả `mapTransition`. |
 
 ## 3. Quy tắc chat
 

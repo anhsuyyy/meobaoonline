@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Phaser from 'phaser';
 import { useDispatch } from 'react-redux';
-import SceneChuong0 from './scenes/SceneChuong0';
+import SceneNro from './scenes/SceneNro';
 import {
     setPlayerId,
     setSystemMessage,
@@ -12,12 +12,12 @@ import {
     setQuestCompleted,
     setPlayerPos,
     setSelectedTarget,
+    clearSelectedTarget,
     updateTargetHp,
-    openClassSelection,
-    setClassSelectionError,
-    classSelectionSucceeded,
     receiveChatHistory,
-    receiveChatMessage
+    receiveChatMessage,
+    setSkillConfig,
+    recordSkillSuccess
 } from '../store/gameSlice';
 import networkInstance from './network';
 
@@ -30,6 +30,7 @@ const GameCanvas = () => {
     const containerRef = useRef(null);
     const destroyTimerRef = useRef(null);
     const dispatch     = useDispatch();
+    const [sceneReady, setSceneReady] = useState(false);
 
     useEffect(() => {
         if (destroyTimerRef.current !== null) {
@@ -40,6 +41,11 @@ const GameCanvas = () => {
         // Guard chống React Strict Mode double-mount
         if (gameRef.current || !containerRef.current) return;
 
+        // Subscribe before Phaser boots so a very fast initialState cannot race Redux listeners.
+        const onSkillConfig = (event) => dispatch(setSkillConfig(event.detail || { skills: {}, levels: {} }));
+        const onSceneReady = () => setSceneReady(true);
+        window.addEventListener('game:skill-config', onSkillConfig);
+        window.addEventListener('game:nro-scene-ready', onSceneReady);
         const container = containerRef.current;
 
         const config = {
@@ -54,16 +60,18 @@ const GameCanvas = () => {
                 width:  1280,
                 height: 720
             },
-            scene: [SceneChuong0],
-            physics: {
-                default: 'arcade',
-                arcade: { debug: false }
+            fps: {
+                target: 90,
+                limit: 0,
+                forceSetTimeOut: false,
+                smoothStep: true
             },
+            scene: [SceneNro],
             render: {
-                pixelArt:         false,
-                antialias:        true,
-                antialiasGL:      true,
-                roundPixels:      false,
+                pixelArt:         true,
+                antialias:        false,
+                antialiasGL:      false,
+                roundPixels:      true,
                 preserveDrawingBuffer: false
             }
         };
@@ -74,27 +82,21 @@ const GameCanvas = () => {
         // ── Cầu nối sự kiện Phaser → Redux ──
         const ev = phaserGame.events;
         ev.on('setPlayerId',        (id)      => dispatch(setPlayerId(id)));
+        ev.on('setSkillConfig',     (value)  => dispatch(setSkillConfig(value)));
+        ev.on('skillSuccess',       (value)  => dispatch(recordSkillSuccess(value)));
         ev.on('chatHistory',        (history) => dispatch(receiveChatHistory(Object.values(history).flat())));
         ev.on('chatMessage',        (message) => dispatch(receiveChatMessage(message)));
         ev.on('updateStats',        (stats)   => dispatch(updateStats(stats)));
         ev.on('setPlayerPos',       (pos)     => dispatch(setPlayerPos(pos)));
         ev.on('setSelectedTarget',  (target)  => dispatch(setSelectedTarget(target)));
+        ev.on('clearSelectedTarget', () => dispatch(clearSelectedTarget()));
         ev.on('updateTargetHp',     (data)    => dispatch(updateTargetHp(data)));
         ev.on('setAutoFarmState',   (payload) => dispatch(setAutoFarmState(payload)));
         ev.on('updateQuestProgress',(payload) => dispatch(updateQuestProgress(payload)));
         ev.on('setQuestCompleted',  (payload) => dispatch(setQuestCompleted(payload)));
-        ev.on('classNpcInteraction', (payload) => dispatch(openClassSelection(payload)));
-        ev.on('classNpcFeedback', (payload) => dispatch(setSystemMessage(payload.message)));
-        ev.on('classLevelUnlocked', (payload) => dispatch(setSystemMessage(
-            `Bạn đã đạt Lv.${payload.level}! Hãy đến gặp ${payload.npc.name} để chọn class.`
-        )));
         ev.on('persistenceError', (payload) => dispatch(setSystemMessage(payload.message)));
-        ev.on('classSelectionResult', (payload) => {
-            if (payload.success) {
-                dispatch(classSelectionSucceeded(payload));
-            } else {
-                dispatch(setClassSelectionError(payload.message));
-            }
+        ev.on('nroCharacterCreationResult', (payload) => {
+            window.dispatchEvent(new CustomEvent('game:nro-character-creation', { detail: payload }));
         });
         ev.on('authenticationExpired', () => {
             networkInstance.disconnect();
@@ -108,6 +110,8 @@ const GameCanvas = () => {
 
                 phaserGame.events.removeAllListeners();
                 phaserGame.destroy(true);
+                window.removeEventListener('game:skill-config', onSkillConfig);
+                window.removeEventListener('game:nro-scene-ready', onSceneReady);
                 gameRef.current = null;
                 destroyTimerRef.current = null;
             }, 0);
@@ -116,6 +120,7 @@ const GameCanvas = () => {
     }, []);   // chạy đúng 1 lần – dispatch không thay đổi
 
     return (
+        <>
         <div
             ref={containerRef}
             id="game-container"
@@ -128,6 +133,8 @@ const GameCanvas = () => {
                 background: '#0d1f10'
             }}
         />
+        {!sceneReady && <div className="nro-scene-loading" role="status" aria-live="polite">Đang tải bản đồ…</div>}
+        </>
     );
 };
 

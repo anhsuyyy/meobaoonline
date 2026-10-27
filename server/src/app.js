@@ -4,6 +4,7 @@ const authRouter = require('./modules/auth/authController');
 const characterRouter = require('./modules/characters/characterController');
 const gameConfig = require('./config/gameConfig.json');
 const { corsOrigin } = require('./config/clientOrigin');
+const { isDbConnected } = require('./infrastructure/database/connection');
 
 const app = express();
 
@@ -16,9 +17,14 @@ app.use('/api/characters', characterRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
+    const gameName = gameConfig.gameMode === 'nro'
+        ? 'Ngọc Rồng Online Web'
+        : 'Mèo Đa Vũ Trụ Online';
     res.json({
         status: 'ok',
-        game: 'Mèo Đa Vũ Trụ Online',
+        game: gameName,
+        mode: gameConfig.gameMode,
+        databaseReady: isDbConnected(),
         version: gameConfig.version,
         timestamp: new Date().toISOString()
     });

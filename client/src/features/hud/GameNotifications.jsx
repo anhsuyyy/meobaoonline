@@ -38,7 +38,7 @@ const GameNotifications = () => {
                 display: 'flex', alignItems: 'center', gap: 7,
                 animation: 'game-notification-fade 3.4s ease both'
             }}>
-                <span style={{ fontSize: 14 }}>🔔</span>
+                <span className="nro-bell-glyph" aria-hidden="true" />
                 <span style={{
                     color: '#fde68a', fontSize: 11, fontWeight: 700,
                     textShadow: '0 1px 4px rgba(0,0,0,0.9)',

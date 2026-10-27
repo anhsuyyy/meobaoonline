@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { useSelector } from 'react-redux';
+import { areEffectsReduced, setEffectsReduced, subscribeEffectsPreference } from '../../game/effectsPreferences';
+import useNetworkStatus from './useNetworkStatus';
 
 /**
  * MiniMapPanel - Góc trên bên phải
@@ -8,6 +10,11 @@ import { useSelector } from 'react-redux';
 const MiniMapPanel = () => {
     const { playerPos, mapInfo } = useSelector((state) => state.game);
     const [gameTime, setGameTime] = useState('');
+    const [fps, setFps] = useState(0);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [debugOpen, setDebugOpen] = useState(false);
+    const reducedEffects = useSyncExternalStore(subscribeEffectsPreference, areEffectsReduced, () => false);
+    const network = useNetworkStatus();
 
     // Cập nhật đồng hồ thời gian thực
     useEffect(() => {
@@ -20,13 +27,31 @@ const MiniMapPanel = () => {
         return () => clearInterval(id);
     }, []);
 
+    useEffect(() => {
+        let frames = 0;
+        let startedAt = 0;
+        let rafId;
+        const measure = (now) => {
+            if (!startedAt) startedAt = now;
+            frames++;
+            if (now - startedAt >= 1000) {
+                setFps(Math.round((frames * 1000) / (now - startedAt)));
+                frames = 0;
+                startedAt = now;
+            }
+            rafId = window.requestAnimationFrame(measure);
+        };
+        rafId = window.requestAnimationFrame(measure);
+        return () => window.cancelAnimationFrame(rafId);
+    }, []);
+
     // Tỷ lệ tọa độ: world 1280×720 → minimap 110×72
     const dotX = Math.max(4, Math.min(106, (playerPos.x / 1280) * 110));
     const dotY = Math.max(4, Math.min(68,  (playerPos.y / 720)  * 72));
 
     return (
         <div className="pointer-events-auto" style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.8))' }}>
-            <div style={{
+            <div className="hud-minimap-card" style={{
                 background: 'linear-gradient(180deg, rgba(28,18,8,0.95) 0%, rgba(12,8,3,0.97) 100%)',
                 border: '2px solid #b45309',
                 outline: '1px solid #451a03',
@@ -37,15 +62,26 @@ const MiniMapPanel = () => {
                 minWidth: 140
             }}>
                 {/* Header: Tên zone + đồng hồ */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #292524', paddingBottom: 4 }}>
+                <div className="hud-minimap-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #292524', paddingBottom: 4 }}>
                     <span style={{ color: '#4ade80', fontSize: 9, fontWeight: 700, textShadow: '0 0 6px rgba(34,197,94,0.4)' }}>
-                        📍 {mapInfo.subArea || 'Khu 1'}
+                        <i className="nro-map-pin" aria-hidden="true" /> {mapInfo.subArea || 'Khu 1'}
                     </span>
                     <span style={{
                         color: '#fbbf24', fontSize: 11, fontWeight: 900, fontFamily: 'monospace',
                         textShadow: '0 0 6px rgba(251,191,36,0.5)'
-                    }}>⏱ {gameTime}</span>
+                    }}><i className="nro-clock-glyph" aria-hidden="true" /> {gameTime}</span>
+                    <span className={`hud-connection-dot ${network.connection}`} role="img" aria-label={connectionLabel(network.connection)} title={connectionLabel(network.connection)} />
+                    <button type="button" className="hud-menu-button" aria-label="Mở menu giao diện" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
                 </div>
+
+                {menuOpen && <div className="hud-quick-menu">
+                    <button type="button" onClick={() => setEffectsReduced(!reducedEffects)}>
+                        Hiệu ứng: {reducedEffects ? 'Giảm' : 'Đầy'}
+                    </button>
+                    <button type="button" onClick={() => setDebugOpen(!debugOpen)} aria-pressed={debugOpen}>
+                        {debugOpen ? 'Ẩn bảng debug' : 'Bảng debug'}
+                    </button>
+                </div>}
 
                 {/* Tên bản đồ */}
                 <div style={{ textAlign: 'center' }}>
@@ -60,7 +96,7 @@ const MiniMapPanel = () => {
                 </div>
 
                 {/* Khung radar minimap */}
-                <div style={{
+                <div className="hud-minimap-radar" style={{
                     position: 'relative', width: 110, height: 72,
                     background: 'linear-gradient(135deg, #064e3b 0%, #0f2d1f 50%, #0c1f1a 100%)',
                     border: '2px solid #d97706',
@@ -144,13 +180,37 @@ const MiniMapPanel = () => {
                         {Math.round(playerPos.x)},{Math.round(playerPos.y)}
                     </span>
                     <div style={{ display: 'flex', gap: 5 }}>
-                        <span style={{ color: '#4ade80', fontSize: 8, fontWeight: 700 }}>{mapInfo.fps || 60}FPS</span>
-                        <span style={{ color: '#38bdf8', fontSize: 8, fontWeight: 700 }}>{mapInfo.ping || 28}ms</span>
+                        <span style={{ color: '#4ade80', fontSize: 8, fontWeight: 700 }}>FPS {fps || '—'}</span>
+                        <span style={{ color: pingColor(network.pingMs), fontSize: 8, fontWeight: 700 }}>
+                            Ping {network.pingMs === null ? '—' : `${network.pingMs}ms`}
+                        </span>
                     </div>
                 </div>
+
+                {debugOpen && <div className="hud-debug-panel" aria-live="polite">
+                    <div>Kết nối: <strong>{connectionLabel(network.connection)}</strong></div>
+                    <div>Ping RTT: <strong>{network.pingMs === null ? '—' : `${network.pingMs} ms`}</strong></div>
+                    <div>Tick server: <strong>{network.serverTickRate === null ? '—' : `${network.serverTickRate} Hz`}</strong></div>
+                    <div>Snapshot: <strong>{network.measuredTickRate === null ? '—' : `${network.measuredTickRate} Hz`}</strong> · Jitter <strong>{network.jitterMs === null ? '—' : `${network.jitterMs} ms`}</strong></div>
+                    <div>Entity: <strong>{network.players} người · {network.monsters} quái</strong></div>
+                </div>}
             </div>
         </div>
     );
 };
+
+function pingColor(pingMs) {
+    if (pingMs === null) return '#94a3b8';
+    if (pingMs < 100) return '#4ade80';
+    if (pingMs < 250) return '#facc15';
+    return '#f87171';
+}
+
+function connectionLabel(connection) {
+    if (connection === 'connected') return 'Đã kết nối';
+    if (connection === 'reconnecting') return 'Đang kết nối lại';
+    if (connection === 'offline') return 'Mất kết nối';
+    return 'Đang kết nối';
+}
 
 export default MiniMapPanel;

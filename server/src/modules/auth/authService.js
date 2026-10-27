@@ -26,7 +26,8 @@ class AuthService {
 
         return jwt.sign(
             {
-                userId: String(user._id || user.id)
+                userId: String(user._id || user.id),
+                sessionVersion: Number(user.sessionVersion) || 0
             },
             jwtSecret,
             { expiresIn: TOKEN_EXPIRY }
