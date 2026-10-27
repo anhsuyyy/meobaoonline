@@ -8,6 +8,7 @@ import {
 } from '../snapshotInterpolation';
 
 const TILE = 24;
+const BASE_WORLD_ZOOM = 1.5;
 
 /** Side-view NRO scene; server snapshots remain the authority for position. */
 export default class SceneNro extends Phaser.Scene {
@@ -196,9 +197,7 @@ export default class SceneNro extends Phaser.Scene {
             color: '#fff0b5', stroke: '#392718', strokeThickness: 5,
             backgroundColor: '#1b271bcc', padding: { x: 14, y: 6 }
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(1000).setVisible(false);
-        this.cameras.main.setBounds(0, 0, this.mapWidth, this.mapHeight);
-        // Zoom the world while counter-scaling players so their current screen size stays unchanged.
-        this.cameras.main.setZoom(1.5);
+        this.configureMapCamera();
         this.cursors = this.input.keyboard.createCursorKeys();
         this.lastUpPressAt = 0;
         this.upInputWasDown = false;
@@ -573,6 +572,21 @@ export default class SceneNro extends Phaser.Scene {
         return Number.isInteger(Number(mapEntry?.bgId)) ? Number(mapEntry.bgId) : 0;
     }
 
+    configureMapCamera() {
+        const camera = this.cameras.main;
+        if (!camera || !this.mapWidth || !this.mapHeight) return;
+
+        // Keep short maps from exposing void past either edge. The zoom can
+        // increase just enough for the map to cover the camera viewport, while
+        // longer maps retain the regular world zoom and continue scrolling.
+        const coverWidthZoom = camera.width / this.mapWidth;
+        const coverHeightZoom = camera.height / this.mapHeight;
+        const zoom = Math.max(BASE_WORLD_ZOOM, coverWidthZoom, coverHeightZoom);
+        camera.setZoom(zoom);
+        camera.setBounds(0, 0, this.mapWidth, this.mapHeight);
+        camera.centerOn(this.mapWidth / 2, this.mapHeight / 2);
+    }
+
     drawBackgroundLayers() {
         let groundRow = -1;
         let maxTopTiles = 0;
@@ -807,6 +821,7 @@ export default class SceneNro extends Phaser.Scene {
         window.dispatchEvent(new CustomEvent('game:nro-focus', { detail: null }));
         this.nearbyWaypointId = null;
         this.nearbyWaypointEntry = null;
+        this.cameras.main.stopFollow();
         for (const sign of this.waypointSignposts) sign.container.destroy();
         this.waypointSignposts = [];
         for (const object of this.worldObjects || []) object.destroy();
@@ -837,7 +852,7 @@ export default class SceneNro extends Phaser.Scene {
             color: '#fff0b5', stroke: '#392718', strokeThickness: 5,
             backgroundColor: '#1b271bcc', padding: { x: 14, y: 6 }
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(1000).setVisible(false);
-        this.cameras.main.setBounds(0, 0, this.mapWidth, this.mapHeight);
+        this.configureMapCamera();
     }
 
     async acceptMapTransition(payload) {
