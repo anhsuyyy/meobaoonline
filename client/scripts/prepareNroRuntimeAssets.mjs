@@ -40,12 +40,22 @@ if (missingTerrainFiles.length) {
     throw new Error(`Missing ${missingTerrainFiles.length} required terrain tile image(s): ${missingTerrainFiles.slice(0, 12).join(', ')}`);
 }
 
-// Only replace this directory after this script has marked it as generated.
+// Keep an extracted source archive intact. Only replace directories generated
+// by this script; never remove the user's original art source.
+let preserveExistingSource = false;
 if (fs.existsSync(targetRoot)) {
     if (!fs.existsSync(markerPath)) {
-        throw new Error(`Refusing to replace unmarked NRO assets at ${targetRoot}. Move the source archive out of public first.`);
+        const looksLikeSourceArchive = fs.existsSync(path.join(targetNormal, 'image/1/icon'))
+            && fs.existsSync(path.join(targetNormal, 'data/2/x2/t'));
+        if (!looksLikeSourceArchive) {
+            throw new Error(`Refusing to replace unmarked NRO assets at ${targetRoot}; it is not a recognized extracted source archive.`);
+        }
+        preserveExistingSource = true;
+    } else {
+        const previousManifest = JSON.parse(fs.readFileSync(markerPath, 'utf8'));
+        preserveExistingSource = previousManifest.managedOutput === false;
+        if (!preserveExistingSource) fs.rmSync(targetRoot, { recursive: true, force: true });
     }
-    fs.rmSync(targetRoot, { recursive: true, force: true });
 }
 fs.mkdirSync(targetNormal, { recursive: true });
 
@@ -102,6 +112,10 @@ function copyFile(relativePath) {
         return;
     }
     const destination = path.join(targetNormal, relativePath);
+    if (preserveExistingSource && fs.existsSync(destination)) {
+        copied.push(relativePath.replaceAll('\\', '/'));
+        return;
+    }
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.copyFileSync(source, destination);
     copied.push(relativePath.replaceAll('\\', '/'));
@@ -131,6 +145,7 @@ for (const mobId of mobIds) {
 
 const manifest = {
     source: 'NRO source archive, scale 1',
+    managedOutput: !preserveExistingSource,
     playableMapIds: [...playableMapIds],
     copiedFileCount: copied.length,
     missingFiles: missing

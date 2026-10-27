@@ -2,6 +2,13 @@
 
 Cập nhật: 27/10/2026
 
+### Khôi phục phục vụ hình ảnh — 27/10/2026
+
+- Nguyên nhân: lệnh `dev` và `build` luôn chạy asset generators cần source archive bị `.gitignore` giữ ngoài repo. Trên checkout không có archive, generators ném lỗi trước khi Vite khởi động, nên browser không nhận được game/ảnh.
+- Runtime art thực tế còn đủ trong `client/public/assets/nro`; không cần archive để chạy game. Đổi `dev`/`build` sang dùng trực tiếp runtime assets đã commit; `assets:nro-redraw` vẫn là lệnh riêng khi source archive có sẵn.
+- Sửa `prepareNroRuntimeAssets.mjs` để nhận diện thư mục archive đã giải nén và không xóa/ghi đè source người dùng khi chuẩn bị asset.
+- Xác nhận production build thành công; Vite dev server đang chạy tại `http://192.168.0.119:5173/`; HTTP trả 200 cho player frame, nền, tile, NPC, quái, skill icon, item icon và manifest.
+
 ## Kế hoạch hoàn thiện tiếp theo — 27/10/2026
 
 Đây là kế hoạch làm nốt bản chơi NRO dựa trên source hiện tại. Không coi phần đã có code là hoàn tất nếu chưa qua tiêu chí nghiệm thu. Thứ tự ưu tiên là ổn định vòng chơi trước, sau đó hoàn thiện nội dung và art, cuối cùng QA/phát hành.
@@ -88,11 +95,11 @@ Các lần trước ghi sprite có 5 frame là trạng thái asset cũ. Từ k�
 - Sửa bảng tên cổng ở waypoint sát mép: kẹp theo chiều ngang để toàn bộ nhãn nằm trong bản đồ, chừa tối thiểu 48 px ở mép và đặt depth cao hơn địa hình/tường.
 - Không chủ động kích hoạt cổng hay đánh; quái gần đó vẫn đánh nhân vật trong thời gian QA nên HP giảm và có thể đã được lưu theo phiên. Chưa nghiệm thu travel/reconnect hoặc nhiều client; P0 vẫn cần chạy vòng chơi thực tế.
 - Lint client, production build và `node --check server/src/game/SkillManager.js` đạt. Full regression gần nhất: 145/162 server tests đạt, 17 thất bại; một số fixture theo luật cũ, một số lỗi stamina/SkillManager/task/socket cần phân loại tiếp. Client tests chưa chạy trong lượt full suite đó.
-- Asset prep trước đó bị lệch danh sách map playable: thiếu source terrain cho map 5 và 28–30. Đã tái tạo manifest từ archive đầy đủ (2.322 file); dev/build/redraw tự đồng bộ source theo config trước khi sinh tile/background art.
+- Asset prep trước đó bị lệch danh sách map playable: thiếu source terrain cho map 5 và 28–30. Đã tái tạo manifest từ archive đầy đủ (2.322 file); lệnh redraw lấy danh sách map playable từ config trước khi sinh tile/background art.
 
 ### Tiến độ art pack — 27/10/2026
 
-- Đã nối script nhập art pack vào lệnh dev/build sau bước sinh fallback, để ảnh được thay tự động mỗi lần chạy.
+- Runtime art pack được commit trong `client/public/assets/nro`; dev/build dùng runtime files hiện có. Chạy `assets:nro-redraw` khi cần tái tạo từ archive nguồn.
 - Chỉ nhập `npc`, `backgrounds`, `icons`, `tiles`; không đọc/copy `characters` và `mobs`.
 - Runtime đang dùng ảnh mới cho 22 NPC match ID, 7 nền theo biome, 28 icon skill và 60 icon item. NPC/nền chưa khớp vẫn dùng ảnh fallback.
 - 212 tile gốc vẫn nằm trong `NRO_Art_Pack/NRO_Art_Pack/tiles`; chưa chép vào public khi chưa có bảng ánh xạ ID/bộ tile runtime. Tên số trong pack không đồng nghĩa ID tile và cần giữ nguyên collision.

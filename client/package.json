@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "prepare:frames": "node scripts/prepareNroCharacterMobFrames.mjs",
-    "dev": "node scripts/prepareNroRuntimeAssets.mjs && node scripts/prepareNroCharacterMobFrames.mjs && node scripts/generateNroArtwork.mjs && node scripts/prepareSkillAnimations.mjs && node scripts/importNroArtPack.mjs && vite",
-    "build": "node scripts/prepareNroRuntimeAssets.mjs && node scripts/prepareNroCharacterMobFrames.mjs && node scripts/generateNroArtwork.mjs && node scripts/prepareSkillAnimations.mjs && node scripts/importNroArtPack.mjs && vite build",
+    "dev": "vite",
+    "build": "vite build",
     "test": "node --test tests/*.test.js",
     "assets:skills": "node scripts/prepareSkillAnimations.mjs && node scripts/importNroArtPack.mjs",
     "assets:nro-redraw": "node scripts/prepareNroRuntimeAssets.mjs && node scripts/prepareNroCharacterMobFrames.mjs && node scripts/generateNroArtwork.mjs && node scripts/prepareSkillAnimations.mjs && node scripts/importNroArtPack.mjs",
